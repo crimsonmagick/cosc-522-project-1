@@ -7,69 +7,99 @@
 
 #define ECHOMAX 255     /* Longest string to echo */
 
-void DieWithError(char *errorMessage);  /* External error handling function */
+void DieWithError(char *errorMessage); /* External error handling function */
 
-int main(int argc, char *argv[])
-{
-    int sock;                        /* Socket descriptor */
-    struct sockaddr_in echoServAddr; /* Echo server address */
-    struct sockaddr_in fromAddr;     /* Source address of echo */
-    unsigned short echoServPort;     /* Echo server port */
-    unsigned int fromSize;           /* In-out of address size for recvfrom() */
-    char *servIP;                    /* IP address of server */
-    char *echoString;                /* String to send to echo server */
-    char echoBuffer[ECHOMAX+1];      /* Buffer for receiving echoed string */
-    int echoStringLen;               /* Length of string to echo */
-    int respStringLen;               /* Length of received response */
-    
-    if ((argc < 3) || (argc > 4))    /* Test for correct number of arguments */
-    {
-        fprintf(stderr,"Usage: %s <Server IP> <Echo Word> [<Echo Port>]\n", argv[0]);
+int main(int argc, char *argv[]) {
+    if (argc < 2 || argc > 3) {
+        fprintf(stderr, "Usage: %s <Server IP> [<Echo Port>]\n", argv[0]);
         exit(1);
     }
-    
-    servIP = argv[1];           /* First arg: server IP address (dotted quad) */
-    echoString = argv[2];       /* Second arg: string to echo */
-    
-    if ((echoStringLen = strlen(echoString)) > ECHOMAX)  /* Check input length */
-        DieWithError("Echo word too long");
-    
-    if (argc == 4)
-        echoServPort = atoi(argv[3]);  /* Use given port, if any */
+
+    unsigned short echoServPort; /* Echo server port */
+
+    if (argc == 3)
+        echoServPort = atoi(argv[2]); /* Use given port, if any */
     else
-        echoServPort = 7;  /* 7 is the well-known port for the echo service */
-    
+        echoServPort = 7;
+
+    printf("Welcome to the Lodi Client! Please choose from the following options:\n");
+    printf("1. Register your Lodi Key\n");
+    printf("2. Login to Lodi\n");
+    printf("3. Exit\n");
+
+    while (1) {
+        char str[1] = "0";
+
+        scanf("%[1-3]s", str);
+        printf("%s", str);
+
+        int selected = atoi(str);
+
+        switch (selected) {
+            case 1:
+                printf("TODO register key");
+                break;
+            case 2:
+                printf("TODO login");
+                break;
+            case 3:
+                printf("See you later!");
+                break;
+            default:
+                printf("Please enter a valid option: 1, 2, or 3");
+                break;
+        }
+
+        if (selected == 3) {
+            break;
+        }
+    }
+
+    exit(0);
+}
+
+int registerPublicKey(char *serverIP, unsigned short serverPort, char *key) {
+    int sock; /* Socket descriptor */
+    struct sockaddr_in echoServAddr; /* Echo server address */
+    struct sockaddr_in fromAddr; /* Source address of echo */
+    unsigned int fromSize; /* In-out of address size for recvfrom() */
+    char echoBuffer[ECHOMAX + 1]; /* Buffer for receiving echoed string */
+    int echoStringLen; /* Length of string to echo */
+    int respStringLen; /* Length of received response */
+
+    if ((echoStringLen = strlen(key)) > ECHOMAX) /* Check input length */
+        DieWithError("Echo word too long");
+
     /* Create a datagram/UDP socket */
     if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
         DieWithError("socket() failed");
-    
+
     /* Construct the server address structure */
-    memset(&echoServAddr, 0, sizeof(echoServAddr));    /* Zero out structure */
-    echoServAddr.sin_family = AF_INET;                 /* Internet addr family */
-    echoServAddr.sin_addr.s_addr = inet_addr(servIP);  /* Server IP address */
-    echoServAddr.sin_port   = htons(echoServPort);     /* Server port */
-    
+    memset(&echoServAddr, 0, sizeof(echoServAddr)); /* Zero out structure */
+    echoServAddr.sin_family = AF_INET; /* Internet addr family */
+    echoServAddr.sin_addr.s_addr = inet_addr(serverIP); /* Server IP address */
+    echoServAddr.sin_port = htons(serverPort); /* Server port */
+
     /* Send the string to the server */
-    if (sendto(sock, echoString, echoStringLen, 0, (struct sockaddr *)
+    if (sendto(sock, key, echoStringLen, 0, (struct sockaddr *)
                &echoServAddr, sizeof(echoServAddr)) != echoStringLen)
         DieWithError("sendto() sent a different number of bytes than expected");
-    
+
     /* Recv a response */
     fromSize = sizeof(fromAddr);
     if ((respStringLen = recvfrom(sock, echoBuffer, ECHOMAX, 0,
-         (struct sockaddr *) &fromAddr, &fromSize)) != echoStringLen)
+                                  (struct sockaddr *) &fromAddr, &fromSize)) != echoStringLen)
         DieWithError("recvfrom() failed");
-    
-    if (echoServAddr.sin_addr.s_addr != fromAddr.sin_addr.s_addr)
-    {
-        fprintf(stderr,"Error: received a packet from unknown source.\n");
+
+    if (echoServAddr.sin_addr.s_addr != fromAddr.sin_addr.s_addr) {
+        fprintf(stderr, "Error: received a packet from unknown source.\n");
         exit(1);
     }
-    
+
     /* null-terminate the received data */
     echoBuffer[respStringLen] = '\0';
-    printf("Received: %s\n", echoBuffer);    /* Print the echoed arg */
-    
+    printf("Received: %s\n", echoBuffer); /* Print the echoed arg */
+
     close(sock);
-    exit(0);
+    return 0;
 }
