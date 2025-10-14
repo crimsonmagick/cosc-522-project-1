@@ -7,7 +7,12 @@
 
 #define ECHOMAX 255     /* Longest string to echo */
 
+#define REGISTER_OPTION 1
+#define LOGIN_OPTION 2
+#define QUIT_OPTION 3
+
 void DieWithError(char *errorMessage); /* External error handling function */
+int getOption();
 
 int main(int argc, char *argv[]) {
     if (argc < 2 || argc > 3) {
@@ -23,39 +28,44 @@ int main(int argc, char *argv[]) {
         echoServPort = 7;
 
     printf("Welcome to the Lodi Client! Please choose from the following options:\n");
-    printf("1. Register your Lodi Key\n");
-    printf("2. Login to Lodi\n");
-    printf("3. Exit\n");
 
-    while (1) {
-        char str[1] = "0";
 
-        scanf("%[1-3]s", str);
-        printf("%s", str);
-
-        int selected = atoi(str);
+    int selected = 0;
+    while (selected != QUIT_OPTION) {
+        selected = getOption();
 
         switch (selected) {
-            case 1:
-                printf("TODO register key");
+            case REGISTER_OPTION:
+                printf("TODO register key dialogue\n");
                 break;
-            case 2:
-                printf("TODO login");
+            case LOGIN_OPTION:
+                printf("TODO login dialogue\n");
                 break;
-            case 3:
-                printf("See you later!");
+            case QUIT_OPTION:
+                printf("See you later!\n");
                 break;
             default:
-                printf("Please enter a valid option: 1, 2, or 3");
+                printf("Please enter a valid option: %d, %d, or %d\n",
+                       REGISTER_OPTION, LOGIN_OPTION, QUIT_OPTION);
                 break;
-        }
-
-        if (selected == 3) {
-            break;
         }
     }
 
     exit(0);
+}
+
+int getOption() {
+    printf("1. Register your Lodi Key\n");
+    printf("2. Login to Lodi\n");
+    printf("3. Exit\n");
+
+    int selected = 0;
+    char line[64];
+
+    if (fgets(line, sizeof(line), stdin)) {
+        sscanf(line, "%d", &selected);
+    }
+    return selected;
 }
 
 int registerPublicKey(char *serverIP, unsigned short serverPort, char *key) {
