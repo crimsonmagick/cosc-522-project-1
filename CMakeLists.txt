@@ -21,19 +21,21 @@ target_include_directories(echo_server PRIVATE common)
 
 
 add_executable(lodi_client
-	lodi-client/lodiClient.c
+    lodi-client/lodiClient.c
     ${COMMON_SRC}
+    common/messaging.h
 )
 target_include_directories(lodi_client PRIVATE common)
 
 add_executable(lodi_server
-		lodi-server/lodiServer.c
-		${COMMON_SRC}
+    lodi-server/lodiServer.c
+    ${COMMON_SRC}
 )
 target_include_directories(lodi_server PRIVATE common)
 
 add_executable(pke_server
-		pke-server/pkeServer.c
-		${COMMON_SRC}
+    pke-server/pkeServer.c
+    ${COMMON_SRC}
+    common/messaging.h
 )
 target_include_directories(pke_server PRIVATE common)
