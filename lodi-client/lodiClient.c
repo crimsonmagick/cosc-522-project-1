@@ -4,6 +4,7 @@
 #include <stdlib.h>     /* for atoi() and exit() */
 #include <string.h>     /* for memset() */
 #include <unistd.h>     /* for close() */
+#include "messaging.h"
 
 #define ECHOMAX 255     /* Longest string to echo */
 
@@ -13,7 +14,7 @@
 
 void DieWithError(char *errorMessage); /* External error handling function */
 int getOption();
-int getKey();
+unsigned int getIntInput(char* inputName);
 
 int main(int argc, char *argv[]) {
     if (argc < 2 || argc > 3) {
@@ -28,8 +29,9 @@ int main(int argc, char *argv[]) {
     else
         echoServPort = 7;
 
-    printf("Welcome to the Lodi Client! Please choose from the following options:\n");
-
+    printf("Welcome to the Lodi Client!\n");
+    unsigned int userID = getIntInput("user ID");
+    printf("Now choose from the following options:\n");
 
     int selected = 0;
     while (selected != QUIT_OPTION) {
@@ -37,7 +39,7 @@ int main(int argc, char *argv[]) {
 
         switch (selected) {
             case REGISTER_OPTION:
-                getKey();
+                unsigned int publicKey = getIntInput("public key");
                 break;
             case LOGIN_OPTION:
                 printf("TODO login dialogue\n");
@@ -69,24 +71,24 @@ int getOption() {
     return selected;
 }
 
-int getKey() {
-    int publicKey = -1;
-    while (publicKey < 0) {
-        printf("Please enter your public key:\n");
+unsigned int getIntInput(char* inputName) {
+    int input = -1;
+    while (input < 0) {
+        printf("Please enter your %s:\n",inputName);
         char line[64];
 
         if (fgets(line, sizeof(line), stdin)) {
-            sscanf(line, "%d", &publicKey);
-            if (sscanf(line, "%d", &publicKey) != 1 || publicKey < 0) {
-                printf("Invalid public key entered. Please try again!\n");
+            sscanf(line, "%d", &input);
+            if (sscanf(line, "%d", &input) != 1 || input < 0) {
+                printf("Invalid %s entered. Please try again!\n",inputName);
             }
         }
         else {
             printf("Failed to read user input. Please try again:\n");
         }
     }
-    
-    return publicKey;
+
+    return (unsigned int) input;
 }
 
 int registerPublicKey(char *serverIP, unsigned short serverPort, char *key) {
