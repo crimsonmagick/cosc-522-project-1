@@ -13,6 +13,7 @@
 
 void DieWithError(char *errorMessage); /* External error handling function */
 int getOption();
+int getKey();
 
 int main(int argc, char *argv[]) {
     if (argc < 2 || argc > 3) {
@@ -36,7 +37,7 @@ int main(int argc, char *argv[]) {
 
         switch (selected) {
             case REGISTER_OPTION:
-                printf("TODO register key dialogue\n");
+                getKey();
                 break;
             case LOGIN_OPTION:
                 printf("TODO login dialogue\n");
@@ -66,6 +67,26 @@ int getOption() {
         sscanf(line, "%d", &selected);
     }
     return selected;
+}
+
+int getKey() {
+    int publicKey = -1;
+    while (publicKey < 0) {
+        printf("Please enter your public key:\n");
+        char line[64];
+
+        if (fgets(line, sizeof(line), stdin)) {
+            sscanf(line, "%d", &publicKey);
+            if (sscanf(line, "%d", &publicKey) != 1 || publicKey < 0) {
+                printf("Invalid public key entered. Please try again!\n");
+            }
+        }
+        else {
+            printf("Failed to read user input. Please try again:\n");
+        }
+    }
+    
+    return publicKey;
 }
 
 int registerPublicKey(char *serverIP, unsigned short serverPort, char *key) {
