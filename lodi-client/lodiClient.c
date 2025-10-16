@@ -15,19 +15,23 @@
 void DieWithError(char *errorMessage); /* External error handling function */
 int getOption();
 unsigned int getIntInput(char* inputName);
+int registerPublicKey(unsigned int userID, unsigned int publicKey,char *serverIP, unsigned short serverPort);
 
 int main(int argc, char *argv[]) {
+
     if (argc < 2 || argc > 3) {
         fprintf(stderr, "Usage: %s <Server IP> [<Echo Port>]\n", argv[0]);
         exit(1);
     }
 
-    unsigned short echoServPort; /* Echo server port */
+    char *servIP = argv[1];
+
+    unsigned short servPort; /* Echo server port */
 
     if (argc == 3)
-        echoServPort = atoi(argv[2]); /* Use given port, if any */
+        servPort = atoi(argv[2]); /* Use given port, if any */
     else
-        echoServPort = 7;
+        servPort = 7;
 
     printf("Welcome to the Lodi Client!\n");
     unsigned int userID = getIntInput("user ID");
@@ -40,6 +44,7 @@ int main(int argc, char *argv[]) {
         switch (selected) {
             case REGISTER_OPTION:
                 unsigned int publicKey = getIntInput("public key");
+                registerPublicKey(userID,publicKey,servIP,servPort);
                 break;
             case LOGIN_OPTION:
                 printf("TODO login dialogue\n");
@@ -91,7 +96,7 @@ unsigned int getIntInput(char* inputName) {
     return (unsigned int) input;
 }
 
-int registerPublicKey(char *serverIP, unsigned short serverPort, char *key) {
+int registerPublicKey(unsigned int userID, unsigned int publicKey,char *serverIP, unsigned short serverPort) {
     int sock; /* Socket descriptor */
     struct sockaddr_in echoServAddr; /* Echo server address */
     struct sockaddr_in fromAddr; /* Source address of echo */
@@ -99,40 +104,42 @@ int registerPublicKey(char *serverIP, unsigned short serverPort, char *key) {
     char echoBuffer[ECHOMAX + 1]; /* Buffer for receiving echoed string */
     int echoStringLen; /* Length of string to echo */
     int respStringLen; /* Length of received response */
+    PClientToPKServer clientMessage = {
+        registerKey,
+        userID,
+        publicKey
+    };
 
-    if ((echoStringLen = strlen(key)) > ECHOMAX) /* Check input length */
-        DieWithError("Echo word too long");
-
-    /* Create a datagram/UDP socket */
-    if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
-        DieWithError("socket() failed");
-
-    /* Construct the server address structure */
-    memset(&echoServAddr, 0, sizeof(echoServAddr)); /* Zero out structure */
-    echoServAddr.sin_family = AF_INET; /* Internet addr family */
-    echoServAddr.sin_addr.s_addr = inet_addr(serverIP); /* Server IP address */
-    echoServAddr.sin_port = htons(serverPort); /* Server port */
-
-    /* Send the string to the server */
-    if (sendto(sock, key, echoStringLen, 0, (struct sockaddr *)
-               &echoServAddr, sizeof(echoServAddr)) != echoStringLen)
-        DieWithError("sendto() sent a different number of bytes than expected");
-
-    /* Recv a response */
-    fromSize = sizeof(fromAddr);
-    if ((respStringLen = recvfrom(sock, echoBuffer, ECHOMAX, 0,
-                                  (struct sockaddr *) &fromAddr, &fromSize)) != echoStringLen)
-        DieWithError("recvfrom() failed");
-
-    if (echoServAddr.sin_addr.s_addr != fromAddr.sin_addr.s_addr) {
-        fprintf(stderr, "Error: received a packet from unknown source.\n");
-        exit(1);
-    }
-
-    /* null-terminate the received data */
-    echoBuffer[respStringLen] = '\0';
-    printf("Received: %s\n", echoBuffer); /* Print the echoed arg */
-
-    close(sock);
+    // /* Create a datagram/UDP socket */
+    // if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
+    //     DieWithError("socket() failed");
+    //
+    // /* Construct the server address structure */
+    // memset(&echoServAddr, 0, sizeof(echoServAddr)); /* Zero out structure */
+    // echoServAddr.sin_family = AF_INET; /* Internet addr family */
+    // echoServAddr.sin_addr.s_addr = inet_addr(serverIP); /* Server IP address */
+    // echoServAddr.sin_port = htons(serverPort); /* Server port */
+    //
+    // /* Send the string to the server */
+    // if (sendto(sock, publicKey, echoStringLen, 0, (struct sockaddr *)
+    //            &echoServAddr, sizeof(echoServAddr)) != echoStringLen)
+    //     DieWithError("sendto() sent a different number of bytes than expected");
+    //
+    // /* Recv a response */
+    // fromSize = sizeof(fromAddr);
+    // if ((respStringLen = recvfrom(sock, echoBuffer, ECHOMAX, 0,
+    //                               (struct sockaddr *) &fromAddr, &fromSize)) != echoStringLen)
+    //     DieWithError("recvfrom() failed");
+    //
+    // if (echoServAddr.sin_addr.s_addr != fromAddr.sin_addr.s_addr) {
+    //     fprintf(stderr, "Error: received a packet from unknown source.\n");
+    //     exit(1);
+    // }
+    //
+    // /* null-terminate the received data */
+    // echoBuffer[respStringLen] = '\0';
+    // printf("Received: %s\n", echoBuffer); /* Print the echoed arg */
+    //
+    // close(sock);
     return 0;
 }
