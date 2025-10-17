@@ -7,7 +7,7 @@
 
 #define ECHOMAX 255     /* Longest string to echo */
 
-void DieWithError(char *errorMessage);  /* External error handling function */
+void logError(const char *errorMessage);  /* External error handling function */
 
 int main(int argc, char *argv[])
 {
@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
     
     /* Create socket for sending/receiving datagrams */
     if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
-        DieWithError("socket() failed");
+        logError("socket() failed");
     
     /* Construct local address structure */
     memset(&echoServAddr, 0, sizeof(echoServAddr));   /* Zero out structure */
@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
     
     /* Bind to the local address */
     if (bind(sock, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) < 0)
-        DieWithError("bind() failed");
+        logError("bind() failed");
     
     for (;;) /* Run forever */
     {
@@ -49,14 +49,14 @@ int main(int argc, char *argv[])
         /* Block until receive message from a client */
         if ((recvMsgSize = recvfrom(sock, echoBuffer, ECHOMAX, 0,
                                     (struct sockaddr *) &echoClntAddr, &cliAddrLen)) < 0)
-            DieWithError("recvfrom() failed");
+            logError("recvfrom() failed");
         
         printf("Handling client %s\n", inet_ntoa(echoClntAddr.sin_addr));
         
         /* Send received datagram back to the client */
         if (sendto(sock, echoBuffer, recvMsgSize, 0,
                    (struct sockaddr *) &echoClntAddr, sizeof(echoClntAddr)) != recvMsgSize)
-            DieWithError("sendto() sent a different number of bytes than expected");
+            logError("sendto() sent a different number of bytes than expected");
     }
     /* NOT REACHED */
 }

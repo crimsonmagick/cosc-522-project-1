@@ -39,3 +39,17 @@ add_executable(pke_server
     common/messaging.h
 )
 target_include_directories(pke_server PRIVATE common)
+
+add_executable(tfa_client
+    tfa-client/tfaClient.c
+    ${COMMON_SRC}
+    common/messaging.h
+)
+target_include_directories(tfa_client PRIVATE common)
+
+add_executable(tfa_server
+    tfa-server/tfaServer.c
+    ${COMMON_SRC}
+    common/messaging.h
+)
+target_include_directories(tfa_server PRIVATE common)
