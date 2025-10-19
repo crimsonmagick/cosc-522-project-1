@@ -8,60 +8,60 @@ set(CMAKE_C_EXTENSIONS OFF)
 file(GLOB COMMON_SRC CONFIGURE_DEPENDS common/*.c)
 
 add_executable(echo_client
-    echo-example/UDPEchoClient.c
+    echo-example/udp_echo_client.c
     ${COMMON_SRC}
 )
 target_include_directories(echo_client PRIVATE common)
 
 add_executable(echo_server
-    echo-example/UDPEchoServer.c
+    echo-example/udp_echo_server.c
     ${COMMON_SRC}
 )
 target_include_directories(echo_server PRIVATE common)
 
 
 add_executable(lodi_client
-    lodi-client/lodiClient.c
+    lodi-client/lodi_client.c
     ${COMMON_SRC}
-    common/pkeMessaging.c
-    common/pkeMessaging.h
-    common/lodiMessaging.c
-    common/lodiMessaging.h
+    common/pke_messaging.c
+    common/pke_messaging.h
+    common/lodi_messaging.c
+    common/lodi_messaging.h
 )
 target_include_directories(lodi_client PRIVATE common)
 
 add_executable(lodi_server
-    lodi-server/lodiServer.c
+    lodi-server/lodi_server.c
     ${COMMON_SRC}
-    common/pkeMessaging.c
-    common/pkeMessaging.h
-    common/tfaMessaging.c
-    common/tfaMessaging.h
-    common/lodiMessaging.c
-    common/lodiMessaging.h
+    common/pke_messaging.c
+    common/pke_messaging.h
+    common/tfa_messaging.c
+    common/tfa_messaging.h
+    common/lodi_messaging.c
+    common/lodi_messaging.h
 )
 target_include_directories(lodi_server PRIVATE common)
 
 add_executable(pke_server
-    pke-server/pkeServer.c
+    pke-server/pke_server.c
     ${COMMON_SRC}
 )
 target_include_directories(pke_server PRIVATE common)
 
 add_executable(tfa_client
-    tfa-client/tfaClient.c
+    tfa-client/tfa_client.c
     ${COMMON_SRC}
-    common/pkeMessaging.c
-    common/pkeMessaging.h
-    common/tfaMessaging.c
-    common/tfaMessaging.h
+    common/pke_messaging.c
+    common/pke_messaging.h
+    common/tfa_messaging.c
+    common/tfa_messaging.h
 )
 target_include_directories(tfa_client PRIVATE common)
 
 add_executable(tfa_server
-    tfa-server/tfaServer.c
+    tfa-server/tfa_server.c
     ${COMMON_SRC}
-    common/tfaMessaging.c
-    common/tfaMessaging.h
+    common/tfa_messaging.c
+    common/tfa_messaging.h
 )
 target_include_directories(tfa_server PRIVATE common)
