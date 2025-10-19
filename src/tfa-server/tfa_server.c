@@ -5,9 +5,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdbool.h>
-#include "pke_messaging.h"
-
-void logError(const char *errorMessage); /* External error handling function */
+#include "messaging/pke_messaging.h"
+#include "logging/logging.h"
 
 int main(int argc, char *argv[]) {
     struct sockaddr_in serverAddr;

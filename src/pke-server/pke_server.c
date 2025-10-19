@@ -5,10 +5,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include "logging/logging.h"
 
-#include "pke_messaging.h"
-
-void logError(const char *errorMessage); /* External error handling function */
+#include "messaging/pke_messaging.h"
 
 int main(int argc, char *argv[]) {
     struct sockaddr_in serverAddr;
@@ -43,6 +42,7 @@ int main(int argc, char *argv[]) {
         if (recvfrom(sock, &receivedMessage, sizeof(receivedMessage), 0,
                      (struct sockaddr *) &clientAddr, &clientAddrLen) < 0) {
             logError("recvfrom() failed");
+            continue;
         }
 
         char clientAddress[INET_ADDRSTRLEN];

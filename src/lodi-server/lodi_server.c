@@ -4,10 +4,9 @@
 #include <stdlib.h>     /* for atoi() and exit() */
 #include <string.h>     /* for memset() */
 #include <unistd.h>     /* for close() */
+#include "logging/logging.h"
 
 #define ECHOMAX 255     /* Longest string to echo */
-
-void logError(const char *errorMessage);  /* External error handling function */
 
 int main(int argc, char *argv[])
 {

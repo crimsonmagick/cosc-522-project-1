@@ -4,13 +4,13 @@
 #include <stdlib.h>     /* for atoi() and exit() */
 #include <string.h>     /* for memset() */
 #include <unistd.h>     /* for close() */
-#include "pke_messaging.h"
+#include "messaging/pke_messaging.h"
+#include "logging/logging.h"
 
 #define REGISTER_OPTION 1
 #define LOGIN_OPTION 2
 #define QUIT_OPTION 3
 
-void logError(const char *errorMessage); /* External error handling function */
 int getOption();
 
 unsigned int getIntInput(char *inputName);
@@ -122,15 +122,18 @@ int registerPublicKey(unsigned int userID, unsigned int publicKey, char *serverI
 
     socklen_t fromSize = sizeof(fromAddr);
     if (recvfrom(sock, &serverMessage, sizeof(serverMessage), 0,
-                 (struct sockaddr *) &fromAddr, &fromSize) != sizeof(serverMessage))
+                 (struct sockaddr *) &fromAddr, &fromSize) != sizeof(serverMessage)) {
         logError("recvfrom() failed");
+        exit(1);
+    }
 
     if (serverAddr.sin_addr.s_addr != fromAddr.sin_addr.s_addr) {
         fprintf(stderr, "Error: received a packet from unknown source.\n");
         exit(1);
     }
 
-    printf("Received: %u, %u, %u\n", serverMessage.messageType, serverMessage.userID, serverMessage.publicKey);
+    printf("Registration successful! Received: messageType=%u, userID=%u, publicKey=%u\n",
+        serverMessage.messageType, serverMessage.userID, serverMessage.publicKey);
 
     close(sock);
     return 0;
