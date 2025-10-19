@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 
-#include "messaging.h"
+#include "pkeMessaging.h"
 
 void logError(const char *errorMessage); /* External error handling function */
 

@@ -23,33 +23,45 @@ target_include_directories(echo_server PRIVATE common)
 add_executable(lodi_client
     lodi-client/lodiClient.c
     ${COMMON_SRC}
-    common/messaging.h
+    common/pkeMessaging.c
+    common/pkeMessaging.h
+    common/lodiMessaging.c
+    common/lodiMessaging.h
 )
 target_include_directories(lodi_client PRIVATE common)
 
 add_executable(lodi_server
     lodi-server/lodiServer.c
     ${COMMON_SRC}
+    common/pkeMessaging.c
+    common/pkeMessaging.h
+    common/tfaMessaging.c
+    common/tfaMessaging.h
+    common/lodiMessaging.c
+    common/lodiMessaging.h
 )
 target_include_directories(lodi_server PRIVATE common)
 
 add_executable(pke_server
     pke-server/pkeServer.c
     ${COMMON_SRC}
-    common/messaging.h
 )
 target_include_directories(pke_server PRIVATE common)
 
 add_executable(tfa_client
     tfa-client/tfaClient.c
     ${COMMON_SRC}
-    common/messaging.h
+    common/pkeMessaging.c
+    common/pkeMessaging.h
+    common/tfaMessaging.c
+    common/tfaMessaging.h
 )
 target_include_directories(tfa_client PRIVATE common)
 
 add_executable(tfa_server
     tfa-server/tfaServer.c
     ${COMMON_SRC}
-    common/messaging.h
+    common/tfaMessaging.c
+    common/tfaMessaging.h
 )
 target_include_directories(tfa_server PRIVATE common)

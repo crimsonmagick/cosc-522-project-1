@@ -4,7 +4,7 @@
 #include <stdlib.h>     /* for atoi() and exit() */
 #include <string.h>     /* for memset() */
 #include <unistd.h>     /* for close() */
-#include "messaging.h"
+#include "pkeMessaging.h"
 
 #define REGISTER_OPTION 1
 #define LOGIN_OPTION 2
