@@ -106,8 +106,10 @@ int registerPublicKey(unsigned int userID, unsigned int publicKey, char *serverI
     };
 
     /* Create a datagram/UDP socket */
-    if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
+    if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
         logError("socket() failed");
+        exit(1);
+    }
 
     /* Construct the server address structure */
     struct sockaddr_in serverAddr;
@@ -117,8 +119,10 @@ int registerPublicKey(unsigned int userID, unsigned int publicKey, char *serverI
     serverAddr.sin_port = htons(serverPort);
 
     if (sendto(sock, &clientMessage, sizeof(clientMessage), 0, (struct sockaddr *)
-               &serverAddr, sizeof(serverAddr)) != sizeof(clientMessage))
+               &serverAddr, sizeof(serverAddr)) != sizeof(clientMessage)) {
         logError("sendto() sent a different number of bytes than expected");
+        exit(1);
+    }
 
     socklen_t fromSize = sizeof(fromAddr);
     if (recvfrom(sock, &serverMessage, sizeof(serverMessage), 0,
