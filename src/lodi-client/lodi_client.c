@@ -104,6 +104,11 @@ int registerPublicKey(unsigned int userID, unsigned int publicKey, char *serverI
         userID,
         publicKey
     };
+    PClientToPKServer deserialized;
+
+    char* serialized = malloc(12);
+    serializePKRegistration(clientMessage, serialized);
+    deserializePKRegistration(serialized, &deserialized);
 
     /* Create a datagram/UDP socket */
     if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
