@@ -21,21 +21,31 @@ add_executable(echo_server
 add_executable(lodi_client
     src/lodi-client/lodi_client.c
     ${COMMON_SRC}
+    include/messaging/utils.h
+    src/shared/messaging/utils.c
 )
 add_executable(lodi_server
     src/lodi-server/lodi_server.c
     ${COMMON_SRC}
+    include/messaging/utils.h
+    src/shared/messaging/utils.c
 )
 add_executable(pke_server
     src/pke-server/pke_server.c
     ${COMMON_SRC}
+    include/messaging/utils.h
+    src/shared/messaging/utils.c
 )
 add_executable(tfa_client
     src/tfa-client/tfa_client.c
     ${COMMON_SRC}
+    include/messaging/utils.h
+    src/shared/messaging/utils.c
 )
 
 add_executable(tfa_server
     src/tfa-server/tfa_server.c
     ${COMMON_SRC}
+    include/messaging/utils.h
+    src/shared/messaging/utils.c
 )
