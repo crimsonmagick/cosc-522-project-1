@@ -145,7 +145,7 @@ void lodiLogin(unsigned int userID, long timestamp, long digitalSignature, char 
     char* requestSerialized = malloc(32);
     char* responseSerialized = malloc(8);
     serializePClientToLodiServerRequest(clientMessage, requestSerialized);
-    sendMessage(requestSerialized, responseSerialized, 20, 8,
+    sendMessage(requestSerialized, responseSerialized, 32, 8,
         servIP, servPort);
     PKServerToLodiClient responseDeserialized;
     deserializePKServerResponse(responseSerialized, &responseDeserialized);

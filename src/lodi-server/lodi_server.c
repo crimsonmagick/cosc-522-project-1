@@ -40,11 +40,12 @@ int main(int argc, char *argv[]) {
 
         size_t sizeOfReceivedMessage = sizeof(receivedMessage);
         socklen_t clientAddrLen = sizeof(clientAddr);
-        if (recvfrom(sock, &receivedMessage, sizeOfReceivedMessage, 0,
-                     (struct sockaddr *) &clientAddr, &clientAddrLen) < 0) {
+        ssize_t responseLength = recvfrom(sock, &receivedMessage, sizeOfReceivedMessage, 0,
+                                          (struct sockaddr *) &clientAddr, &clientAddrLen);
+        if (responseLength < 0) {
             logError("recvfrom() failed");
             continue;
-                     }
+        }
 
         char clientAddress[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &clientAddr.sin_addr, clientAddress, INET_ADDRSTRLEN);
@@ -55,12 +56,12 @@ int main(int argc, char *argv[]) {
 
         LodiServerToLodiClientAcks toSendMessage = {
             ackLogin,
-           receivedMessage.userID
+            receivedMessage.userID
         };
 
         if (sendto(sock, &toSendMessage, sizeof(toSendMessage), 0,
                    (struct sockaddr *) &clientAddr, sizeof(clientAddr)) != sizeof(toSendMessage)) {
             logError("sendto() sent a different number of bytes than expected");
-                   }
+        }
     }
 }
