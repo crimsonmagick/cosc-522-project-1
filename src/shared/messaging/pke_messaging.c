@@ -5,7 +5,7 @@
 
 //htons - to network short
 //htonl - to network long
-int serializePKRegistration(PClientToPKServer toSerialize, char *serialized) {
+int serializePKClientRequest(PClientToPKServer toSerialize, char *serialized) {
   // int messageType = htonl(toSerialize.messageType);
   // int userID = htonl(toSerialize.userID);
   int messageType = toSerialize.messageType;
@@ -18,7 +18,7 @@ int serializePKRegistration(PClientToPKServer toSerialize, char *serialized) {
   return 0;
 }
 
-int deserializePKRegistration(char *serialized, PKServerToLodiClient *deserialized) {
+int deserializePKServerResponse(char *serialized, PKServerToLodiClient *deserialized) {
 
   int messageType;
   int userID;

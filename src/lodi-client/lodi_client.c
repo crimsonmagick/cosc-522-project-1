@@ -97,62 +97,21 @@ unsigned int getIntInput(char *inputName) {
 }
 
 int registerPublicKey(unsigned int userID, unsigned int publicKey, char *serverIP, unsigned short serverPort) {
-    int sock; /* Socket descriptor */
-    struct sockaddr_in fromAddr; /* Source address of echo */
-    PKServerToPClientOrLodiServer serverMessage;
     const PClientToPKServer clientMessage = {
         registerKey,
         userID,
         publicKey
     };
-    // PClientToPKServer deserialized;
 
     char* requestSerialized = malloc(12);
     char* responseSerialized = malloc(12);
-    serializePKRegistration(clientMessage, requestSerialized);
+    serializePKClientRequest(clientMessage, requestSerialized);
     sendMessage(requestSerialized, responseSerialized, 12, 12, serverIP, serverPort);
     PKServerToLodiClient responseDeserialized;
-    deserializePKRegistration(responseSerialized, &responseDeserialized);
+    deserializePKServerResponse(responseSerialized, &responseDeserialized);
     printf("Registration successful! Received: messageType=%u, userID=%u, publicKey=%u\n",
         responseDeserialized.messageType, responseDeserialized.userID, responseDeserialized.publicKey);
     free(requestSerialized);
     free(responseSerialized);
     return 0;
-
-
-    /* Create a datagram/UDP socket */
-    // if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-    //     logError("socket() failed");
-    //     exit(1);
-    // }
-
-    /* Construct the server address structure */
-    // struct sockaddr_in serverAddr;
-    // memset(&serverAddr, 0, sizeof(serverAddr));
-    // serverAddr.sin_family = AF_INET;
-    // inet_pton(AF_INET, serverIP, &serverAddr.sin_addr);
-    // serverAddr.sin_port = htons(serverPort);
-    //
-    // if (sendto(sock, &clientMessage, sizeof(clientMessage), 0, (struct sockaddr *)
-    //            &serverAddr, sizeof(serverAddr)) != sizeof(clientMessage)) {
-    //     logError("sendto() sent a different number of bytes than expected");
-    //     exit(1);
-    // }
-    //
-    // socklen_t fromSize = sizeof(fromAddr);
-    // if (recvfrom(sock, &serverMessage, sizeof(serverMessage), 0,
-    //              (struct sockaddr *) &fromAddr, &fromSize) != sizeof(serverMessage)) {
-    //     logError("recvfrom() failed");
-    //     exit(1);
-    // }
-    //
-    // if (serverAddr.sin_addr.s_addr != fromAddr.sin_addr.s_addr) {
-    //     fprintf(stderr, "Error: received a packet from unknown source.\n");
-    //     exit(1);
-    // }
-    //
-    // printf("Registration successful! Received: messageType=%u, userID=%u, publicKey=%u\n",
-    //     serverMessage.messageType, serverMessage.userID, serverMessage.publicKey);
-    //
-    // close(sock);
 }

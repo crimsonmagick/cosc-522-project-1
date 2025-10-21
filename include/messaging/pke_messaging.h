@@ -13,7 +13,7 @@ typedef struct {
   unsigned int publicKey; /* user's public key or 0 if message_type is request_key */
 } PClientToPKServer;
 
-int serializePKRegistration(PClientToPKServer toSerialize, char* serialized);
-int deserializePKRegistration(char* serialized, PKServerToLodiClient *deserialized);
+int serializePKClientRequest(PClientToPKServer toSerialize, char* serialized);
+int deserializePKServerResponse(char* serialized, PKServerToLodiClient *deserialized);
 
 #endif //COSC522_LODI_PKEMESSAGING_H
