@@ -10,7 +10,8 @@
 #define SUCCESS 0
 #define ERROR 1
 
-int sendMessage(char *clientMessageIn, char *serverMessageOut, char *serverIP, unsigned short serverPort) {
+int sendMessage(char *clientMessageIn, char *serverMessageOut, size_t messageInSize, size_t messageOutSize,
+                char *serverIP, unsigned short serverPort) {
   int sock; /* Socket descriptor */
   struct sockaddr_in fromAddr; /* Source address of echo */
 
@@ -27,16 +28,16 @@ int sendMessage(char *clientMessageIn, char *serverMessageOut, char *serverIP, u
   inet_pton(AF_INET, serverIP, &serverAddr.sin_addr);
   serverAddr.sin_port = htons(serverPort);
 
-  if (sendto(sock, &clientMessageIn, sizeof(clientMessageIn), 0, (struct sockaddr *)
-             &serverAddr, sizeof(serverAddr)) != sizeof(clientMessageIn)) {
+  if (sendto(sock, clientMessageIn, messageInSize, 0, (struct sockaddr *)
+             &serverAddr, sizeof(serverAddr)) != messageInSize) {
     logError("sendto() sent a different number of bytes than expected");
     return ERROR;
   }
 
   socklen_t fromSize = sizeof(fromAddr);
 
-  if (recvfrom(sock, &serverMessageOut, sizeof(serverMessageOut), 0,
-               (struct sockaddr *) &fromAddr, &fromSize) != sizeof(serverMessageOut)) {
+  if (recvfrom(sock, serverMessageOut, messageOutSize, 0,
+               (struct sockaddr *) &fromAddr, &fromSize) != messageOutSize) {
     logError("recvfrom() failed");
     return ERROR;
   }

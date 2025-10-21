@@ -14,6 +14,6 @@ typedef struct {
 } PClientToPKServer;
 
 int serializePKRegistration(PClientToPKServer toSerialize, char* serialized);
-int deserializePKRegistration(char* serialized, PClientToPKServer *deserialized);
+int deserializePKRegistration(char* serialized, PKServerToLodiClient *deserialized);
 
 #endif //COSC522_LODI_PKEMESSAGING_H

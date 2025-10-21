@@ -18,7 +18,7 @@ int serializePKRegistration(PClientToPKServer toSerialize, char *serialized) {
   return 0;
 }
 
-int deserializePKRegistration(char *serialized, PClientToPKServer *deserialized) {
+int deserializePKRegistration(char *serialized, PKServerToLodiClient *deserialized) {
 
   int messageType;
   int userID;

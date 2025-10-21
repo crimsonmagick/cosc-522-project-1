@@ -38,8 +38,9 @@ int main(int argc, char *argv[]) {
     while (true) {
         PClientToPKServer receivedMessage;
 
+        size_t sizeOfReceivedMessage = sizeof(receivedMessage);
         socklen_t clientAddrLen = sizeof(clientAddr);
-        if (recvfrom(sock, &receivedMessage, sizeof(receivedMessage), 0,
+        if (recvfrom(sock, &receivedMessage, sizeOfReceivedMessage, 0,
                      (struct sockaddr *) &clientAddr, &clientAddrLen) < 0) {
             logError("recvfrom() failed");
             continue;

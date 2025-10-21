@@ -47,9 +47,10 @@ int main(int argc, char *argv[])
         
         /* Block until receive message from a client */
         if ((recvMsgSize = recvfrom(sock, echoBuffer, ECHOMAX, 0,
-                                    (struct sockaddr *) &echoClntAddr, &cliAddrLen)) < 0)
+                                    (struct sockaddr *) &echoClntAddr, &cliAddrLen)) < 0) {
             logError("recvfrom() failed");
-        
+        }
+
         printf("Handling client %s\n", inet_ntoa(echoClntAddr.sin_addr));
         
         /* Send received datagram back to the client */
