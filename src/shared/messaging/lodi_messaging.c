@@ -6,17 +6,15 @@ int serializePClientToLodiServerRequest(PClientToLodiServer toSerialize, char *s
   int messageType = toSerialize.messageType;
   int userID = toSerialize.userID;
   int recipientId = toSerialize.recipientID;
-  int timestamp = toSerialize.timestamp;
-  int digitalSig = toSerialize.digitalSig;
+  unsigned long timestamp = toSerialize.timestamp;
+  unsigned long digitalSig = toSerialize.digitalSig;
 
-  memset(serialized, 0, 20);
+  memset(serialized, 0, 32);
   memcpy(serialized, &messageType, sizeof(messageType));
-  memcpy(serialized + sizeof(messageType), &userID, sizeof(userID));
-  memcpy(serialized + sizeof(messageType) + sizeof(recipientId), &recipientId, sizeof(recipientId));
-  memcpy(serialized + sizeof(messageType) + sizeof(recipientId) + sizeof(timestamp),
-         &timestamp, sizeof(timestamp));
-  memcpy(serialized + sizeof(messageType) + sizeof(recipientId) + sizeof(timestamp) + sizeof(digitalSig),
-         &digitalSig, sizeof(digitalSig));
+  memcpy(serialized + 4, &userID, sizeof(userID));
+  memcpy(serialized + 8, &recipientId, sizeof(recipientId));
+  memcpy(serialized + 16, &timestamp, sizeof(timestamp));
+  memcpy(serialized + 24, &digitalSig, sizeof(digitalSig));
   return 0;
 }
 

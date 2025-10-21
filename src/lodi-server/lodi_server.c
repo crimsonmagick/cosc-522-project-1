@@ -7,7 +7,7 @@
 #include <stdbool.h>
 #include "logging/logging.h"
 
-#include "messaging/pke_messaging.h"
+#include "messaging/lodi_messaging.h"
 
 int main(int argc, char *argv[]) {
     struct sockaddr_in serverAddr;
@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
     }
 
     while (true) {
-        PClientToPKServer receivedMessage;
+        PClientToLodiServer receivedMessage;
 
         size_t sizeOfReceivedMessage = sizeof(receivedMessage);
         socklen_t clientAddrLen = sizeof(clientAddr);
@@ -50,10 +50,12 @@ int main(int argc, char *argv[]) {
         inet_ntop(AF_INET, &clientAddr.sin_addr, clientAddress, INET_ADDRSTRLEN);
         printf("Handling client %s\n", clientAddress);
 
-        PKServerToPClientOrLodiServer toSendMessage = {
-            ackRegisterKey,
-            receivedMessage.userID,
-            receivedMessage.publicKey
+        // TODO connect to PKE and get publicKey, validate publicKey,
+        // TODO connect to TFA server and get two factor auth confirmation
+
+        LodiServerToLodiClientAcks toSendMessage = {
+            ackLogin,
+           receivedMessage.userID
         };
 
         if (sendto(sock, &toSendMessage, sizeof(toSendMessage), 0,

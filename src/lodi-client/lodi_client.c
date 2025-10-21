@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
                 privateKey = getIntInput("private key");
                 time(&timestamp);
                 digitalSignature = encryptTimestamp(timestamp, privateKey);
-                lodiLogin(userID, timestamp, digitalSignature, servIP, servPort);
+                lodiLogin(userID, timestamp, digitalSignature, servIP, 9092);
                 break;
             case QUIT_OPTION:
                 printf("See you later!\n");
@@ -142,14 +142,15 @@ void lodiLogin(unsigned int userID, long timestamp, long digitalSignature, char 
         digitalSignature
     };
 
-    char* requestSerialized = malloc(20);
+    char* requestSerialized = malloc(32);
     char* responseSerialized = malloc(8);
     serializePClientToLodiServerRequest(clientMessage, requestSerialized);
-    // sendMessage(requestSerialized, responseSerialized, 12, 12, serverIP, serverPort);
-    // PKServerToLodiClient responseDeserialized;
-    // deserializePKServerResponse(responseSerialized, &responseDeserialized);
-    // printf("Registration successful! Received: messageType=%u, userID=%u, publicKey=%u\n",
-        // responseDeserialized.messageType, responseDeserialized.userID, responseDeserialized.publicKey);
+    sendMessage(requestSerialized, responseSerialized, 20, 8,
+        servIP, servPort);
+    PKServerToLodiClient responseDeserialized;
+    deserializePKServerResponse(responseSerialized, &responseDeserialized);
+    printf("Registration successful! Received: messageType=%u, userID=%u, publicKey=%u\n",
+        responseDeserialized.messageType, responseDeserialized.userID, responseDeserialized.publicKey);
     free(requestSerialized);
     free(responseSerialized);
 }
