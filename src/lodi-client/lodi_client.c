@@ -4,7 +4,10 @@
 #include <stdlib.h>     /* for atoi() and exit() */
 #include <string.h>     /* for memset() */
 #include <unistd.h>     /* for close() */
+#include <time.h>
+
 #include "messaging/pke_messaging.h"
+#include "messaging/lodi_messaging.h"
 #include "messaging/utils.h"
 #include "logging/logging.h"
 
@@ -15,8 +18,11 @@
 int getOption();
 
 unsigned int getIntInput(char *inputName);
+long encryptTimestamp(long timestamp, unsigned int privateKey);
 
 int registerPublicKey(unsigned int userID, unsigned int publicKey, char *serverIP, unsigned short serverPort);
+
+void lodiLogin(unsigned int userID, long timestamp, long digitalSignature, char * servIP, unsigned short servPort);
 
 int main(int argc, char *argv[]) {
     if (argc < 2 || argc > 3) {
@@ -42,13 +48,19 @@ int main(int argc, char *argv[]) {
         selected = getOption();
 
         unsigned int publicKey;
+        unsigned int privateKey;
+        long timestamp;
+        long digitalSignature;
         switch (selected) {
             case REGISTER_OPTION:
                 publicKey = getIntInput("public key");
                 registerPublicKey(userID, publicKey, servIP, servPort);
                 break;
             case LOGIN_OPTION:
-                printf("TODO login dialogue\n");
+                privateKey = getIntInput("private key");
+                time(&timestamp);
+                digitalSignature = encryptTimestamp(timestamp, privateKey);
+                lodiLogin(userID, timestamp, digitalSignature, servIP, servPort);
                 break;
             case QUIT_OPTION:
                 printf("See you later!\n");
@@ -61,6 +73,11 @@ int main(int argc, char *argv[]) {
     }
 
     exit(0);
+}
+
+long encryptTimestamp(long timestamp, unsigned int privateKey) {
+    // TODO encrpytion nonesense
+    return timestamp + 1;
 }
 
 int getOption() {
@@ -114,4 +131,25 @@ int registerPublicKey(unsigned int userID, unsigned int publicKey, char *serverI
     free(requestSerialized);
     free(responseSerialized);
     return 0;
+}
+
+void lodiLogin(unsigned int userID, long timestamp, long digitalSignature, char * servIP, unsigned short servPort) {
+    const PClientToLodiServer clientMessage = {
+        registerKey,
+        userID,
+        0,
+        timestamp,
+        digitalSignature
+    };
+
+    char* requestSerialized = malloc(20);
+    char* responseSerialized = malloc(8);
+    serializePClientToLodiServerRequest(clientMessage, requestSerialized);
+    // sendMessage(requestSerialized, responseSerialized, 12, 12, serverIP, serverPort);
+    // PKServerToLodiClient responseDeserialized;
+    // deserializePKServerResponse(responseSerialized, &responseDeserialized);
+    // printf("Registration successful! Received: messageType=%u, userID=%u, publicKey=%u\n",
+        // responseDeserialized.messageType, responseDeserialized.userID, responseDeserialized.publicKey);
+    free(requestSerialized);
+    free(responseSerialized);
 }

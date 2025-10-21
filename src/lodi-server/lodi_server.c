@@ -1,62 +1,64 @@
-#include <stdio.h>      /* for printf() and fprintf() */
-#include <sys/socket.h> /* for socket() and bind() */
-#include <arpa/inet.h>  /* for sockaddr_in and inet_ntoa() */
-#include <stdlib.h>     /* for atoi() and exit() */
-#include <string.h>     /* for memset() */
-#include <unistd.h>     /* for close() */
+#include <stdio.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <stdbool.h>
 #include "logging/logging.h"
 
-#define ECHOMAX 255     /* Longest string to echo */
+#include "messaging/pke_messaging.h"
 
-int main(int argc, char *argv[])
-{
-    int sock;                        /* Socket */
-    struct sockaddr_in echoServAddr; /* Local address */
-    struct sockaddr_in echoClntAddr; /* Client address */
-    unsigned int cliAddrLen;         /* Length of incoming message */
-    char echoBuffer[ECHOMAX];        /* Buffer for echo string */
-    unsigned short echoServPort;     /* Server port */
-    int recvMsgSize;                 /* Size of received message */
-    
-    if (argc != 2)         /* Test for correct number of parameters */
-    {
-        fprintf(stderr,"Usage:  %s <UDP SERVER PORT>\n", argv[0]);
+int main(int argc, char *argv[]) {
+    struct sockaddr_in serverAddr;
+    struct sockaddr_in clientAddr;
+
+    if (argc != 2) {
+        fprintf(stderr, "Usage: %s <UDP SERVER PORT>\n", argv[0]);
         exit(1);
     }
-    
-    echoServPort = atoi(argv[1]);  /* First arg:  local port */
-    
-    /* Create socket for sending/receiving datagrams */
-    if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
-        logError("socket() failed");
-    
-    /* Construct local address structure */
-    memset(&echoServAddr, 0, sizeof(echoServAddr));   /* Zero out structure */
-    echoServAddr.sin_family = AF_INET;                /* Internet address family */
-    echoServAddr.sin_addr.s_addr = htonl(INADDR_ANY); /* Any incoming interface */
-    echoServAddr.sin_port = htons(echoServPort);      /* Local port */
-    
-    /* Bind to the local address */
-    if (bind(sock, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) < 0)
-        logError("bind() failed");
-    
-    for (;;) /* Run forever */
-    {
-        /* Set the size of the in-out parameter */
-        cliAddrLen = sizeof(echoClntAddr);
-        
-        /* Block until receive message from a client */
-        if ((recvMsgSize = recvfrom(sock, echoBuffer, ECHOMAX, 0,
-                                    (struct sockaddr *) &echoClntAddr, &cliAddrLen)) < 0) {
-            logError("recvfrom() failed");
-        }
 
-        printf("Handling client %s\n", inet_ntoa(echoClntAddr.sin_addr));
-        
-        /* Send received datagram back to the client */
-        if (sendto(sock, echoBuffer, recvMsgSize, 0,
-                   (struct sockaddr *) &echoClntAddr, sizeof(echoClntAddr)) != recvMsgSize)
-            logError("sendto() sent a different number of bytes than expected");
+    const unsigned short serverPort = atoi(argv[1]);
+    const int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (sock < 0) {
+        logError("socket() failed");
+        exit(1);
     }
-    /* NOT REACHED */
+
+    memset(&serverAddr, 0, sizeof(serverAddr));
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    serverAddr.sin_port = htons(serverPort);
+
+    if (bind(sock, (struct sockaddr *) &serverAddr, sizeof(serverAddr)) < 0) {
+        logError("bind() failed");
+        exit(1);
+    }
+
+    while (true) {
+        PClientToPKServer receivedMessage;
+
+        size_t sizeOfReceivedMessage = sizeof(receivedMessage);
+        socklen_t clientAddrLen = sizeof(clientAddr);
+        if (recvfrom(sock, &receivedMessage, sizeOfReceivedMessage, 0,
+                     (struct sockaddr *) &clientAddr, &clientAddrLen) < 0) {
+            logError("recvfrom() failed");
+            continue;
+                     }
+
+        char clientAddress[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &clientAddr.sin_addr, clientAddress, INET_ADDRSTRLEN);
+        printf("Handling client %s\n", clientAddress);
+
+        PKServerToPClientOrLodiServer toSendMessage = {
+            ackRegisterKey,
+            receivedMessage.userID,
+            receivedMessage.publicKey
+        };
+
+        if (sendto(sock, &toSendMessage, sizeof(toSendMessage), 0,
+                   (struct sockaddr *) &clientAddr, sizeof(clientAddr)) != sizeof(toSendMessage)) {
+            logError("sendto() sent a different number of bytes than expected");
+                   }
+    }
 }

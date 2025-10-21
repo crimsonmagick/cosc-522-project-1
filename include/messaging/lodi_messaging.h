@@ -1,7 +1,8 @@
 #ifndef COSC522_LODI_LODIMESSAGING_H
 #define COSC522_LODI_LODIMESSAGING_H
+
 typedef struct {
-  enum {ackLogin} messageType; /* same size as an unsigned int */
+  enum { ackLogin } messageType; /* same size as an unsigned int */
   unsigned int userID; /* user identifier */
 } LodiServerToLodiClientAcks;
 
@@ -13,4 +14,8 @@ typedef struct {
   unsigned long timestamp; /* timestamp */
   unsigned long digitalSig; /* encrypted timestamp */
 } PClientToLodiServer;
+
+int serializePClientToLodiServerRequest(PClientToLodiServer toSerialize, char *serialized);
+
+int deserializeLodiServerToLodiClientAcksResponse(char *serialized, LodiServerToLodiClientAcks *deserialized);
 #endif //COSC522_LODI_LODIMESSAGING_H
