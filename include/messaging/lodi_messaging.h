@@ -15,7 +15,7 @@ typedef struct {
   unsigned long digitalSig; /* encrypted timestamp */
 } PClientToLodiServer;
 
-int serializePClientToLodiServerRequest(PClientToLodiServer toSerialize, char *serialized);
+char * serializePClientToLodiServerRequest(PClientToLodiServer toSerialize);
 
 int deserializeLodiServerToLodiClientAcksResponse(char *serialized, LodiServerToLodiClientAcks *deserialized);
 #endif //COSC522_LODI_LODIMESSAGING_H

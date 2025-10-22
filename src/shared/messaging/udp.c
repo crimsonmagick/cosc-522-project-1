@@ -5,7 +5,7 @@
 #include <unistd.h>
 
 #include "logging/logging.h"
-#include "messaging/utils.h"
+#include "messaging/udp.h"
 
 #define SUCCESS 0
 #define ERROR 1
