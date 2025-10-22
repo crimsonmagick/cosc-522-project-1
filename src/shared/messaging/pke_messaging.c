@@ -1,62 +1,75 @@
 #include <arpa/inet.h>
-#include "messaging/pke_messaging.h"
-
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-//htons - to network short
-//htonl - to network long
-int serializePKClientRequest(PClientToPKServer toSerialize, char *serialized) {
-  // int messageType = htonl(toSerialize.messageType);
-  // int userID = htonl(toSerialize.userID);
-  int messageType = toSerialize.messageType;
-  int userID = toSerialize.userID;
-  int publicKey = toSerialize.publicKey;
-  memset(serialized, 0, 12);
-  memcpy(serialized, &messageType, sizeof(messageType));
-  memcpy(serialized + sizeof(messageType), &userID, sizeof(userID));
-  memcpy(serialized + sizeof(messageType) + sizeof(userID), &publicKey, sizeof(publicKey));
-  return 0;
+#include "messaging/pke_messaging.h"
+#include "util/buffers.h"
+
+char *serializePKClientRequest(const PClientToPKServer *toSerialize, size_t *size) {
+  *size = PK_CLIENT_REQUEST_SIZE;
+  char *serialized = malloc(*size);
+  if (!serialized) {
+    return NULL;
+  }
+
+  size_t offset = 0;
+  appendUint32(serialized, &offset, toSerialize->messageType);
+  appendUint32(serialized, &offset, toSerialize->userID);
+  appendUint32(serialized, &offset, toSerialize->publicKey);
+
+  return serialized;
 }
 
-int deserializePKClientRequest(char *serialized, PClientToPKServer *deserialized) {
+PClientToPKServer *deserializePKClientRequest(const char *serialized, const size_t size) {
+  // validate buffer/serialized size
+  if (size < PK_CLIENT_REQUEST_SIZE) {
+    return NULL;
+  }
 
-  int messageType;
-  int userID;
-  int publicKey;
+  PClientToPKServer *deserialized = malloc(sizeof(*deserialized));
+  if (!deserialized) {
+    return NULL;
+  }
 
-  memcpy(&messageType, serialized, sizeof(int));
-  memcpy(&userID, serialized + sizeof(int), sizeof(int));
-  memcpy(&publicKey, serialized + sizeof(int) * 2, sizeof(int));
-  deserialized->messageType = messageType;
-  deserialized->userID = userID;
-  deserialized->publicKey= publicKey;
-  return 0;
+  size_t offset = 0;
+  deserialized->messageType = getUint32(serialized, &offset);
+  deserialized->userID = getUint32(serialized, &offset);
+  deserialized->publicKey = getUint32(serialized, &offset);
+
+  return deserialized;
 }
 
-int serializePKServerResponse(PKServerToLodiClient toSerialize, char *serialized) {
-  // int messageType = htonl(toSerialize.messageType);
-  // int userID = htonl(toSerialize.userID);
-  int messageType = toSerialize.messageType;
-  int userID = toSerialize.userID;
-  int publicKey = toSerialize.publicKey;
-  memset(serialized, 0, 12);
-  memcpy(serialized, &messageType, sizeof(messageType));
-  memcpy(serialized + sizeof(messageType), &userID, sizeof(userID));
-  memcpy(serialized + sizeof(messageType) + sizeof(userID), &publicKey, sizeof(publicKey));
-  return 0;
+char *serializePKServerResponse(const PKServerToLodiClient *toSerialize, size_t *size) {
+  *size = PK_SERVER_RESPONSE_SIZE;
+  char *serialized = malloc(*size);
+  if (!serialized) {
+    return NULL;
+  }
+
+  size_t offset = 0;
+  appendUint32(serialized, &offset, toSerialize->messageType);
+  appendUint32(serialized, &offset, toSerialize->userID);
+  appendUint32(serialized, &offset, toSerialize->publicKey);
+
+  return serialized;
 }
 
-int deserializePKServerResponse(char *serialized, PKServerToLodiClient *deserialized) {
+PKServerToLodiClient *deserializePKServerResponse(const char *serialized, const size_t size) {
+  // validate buffer/serialized size
+  if (size < PK_SERVER_RESPONSE_SIZE) {
+    return NULL;
+  }
 
-  int messageType;
-  int userID;
-  int publicKey;
+  PKServerToLodiClient *deserialized = malloc(sizeof(*deserialized));
+  if (!deserialized) {
+    return NULL;
+  }
 
-  memcpy(&messageType, serialized, sizeof(int));
-  memcpy(&userID, serialized + sizeof(int), sizeof(int));
-  memcpy(&publicKey, serialized + sizeof(int) * 2, sizeof(int));
-  deserialized->messageType = messageType;
-  deserialized->userID = userID;
-  deserialized->publicKey= publicKey;
-  return 0;
+  size_t offset = 0;
+  deserialized->messageType = getUint32(serialized, &offset);
+  deserialized->userID = getUint32(serialized, &offset);
+  deserialized->publicKey = getUint32(serialized, &offset);
+
+  return deserialized;
 }
