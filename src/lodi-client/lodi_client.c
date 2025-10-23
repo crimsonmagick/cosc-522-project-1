@@ -9,7 +9,7 @@
 #include "messaging/pke_messaging.h"
 #include "messaging/lodi_messaging.h"
 #include "messaging/udp.h"
-#include "logging/logging.h"
+#include "util/server_configs.h"
 
 #define REGISTER_OPTION 1
 #define LOGIN_OPTION 2
@@ -21,24 +21,12 @@ unsigned int getIntInput(char *inputName);
 
 long encryptTimestamp(long timestamp, unsigned int privateKey);
 
-int registerPublicKey(unsigned int userID, unsigned int publicKey, char *serverIP, unsigned short serverPort);
+int registerPublicKey(unsigned int userID, unsigned int publicKey);
 
-void lodiLogin(unsigned int userID, long timestamp, long digitalSignature, char *servIP, unsigned short servPort);
+void lodiLogin(unsigned int userID, long timestamp, long digitalSignature);
 
-int main(int argc, char *argv[]) {
-    if (argc < 2 || argc > 3) {
-        fprintf(stderr, "Usage: %s <Server IP> [<Echo Port>]\n", argv[0]);
-        exit(1);
-    }
+int main() {
 
-    char *servIP = argv[1];
-
-    unsigned short servPort; /* Echo server port */
-
-    if (argc == 3)
-        servPort = atoi(argv[2]); /* Use given port, if any */
-    else
-        servPort = 7;
 
     printf("Welcome to the Lodi Client!\n");
     unsigned int userID = getIntInput("user ID");
@@ -55,13 +43,13 @@ int main(int argc, char *argv[]) {
         switch (selected) {
             case REGISTER_OPTION:
                 publicKey = getIntInput("public key");
-                registerPublicKey(userID, publicKey, servIP, servPort);
+                registerPublicKey(userID, publicKey);
                 break;
             case LOGIN_OPTION:
                 privateKey = getIntInput("private key");
                 time(&timestamp);
                 digitalSignature = encryptTimestamp(timestamp, privateKey);
-                lodiLogin(userID, timestamp, digitalSignature, servIP, 9092);
+                lodiLogin(userID, timestamp, digitalSignature);
                 break;
             case QUIT_OPTION:
                 printf("See you later!\n");
@@ -114,7 +102,8 @@ unsigned int getIntInput(char *inputName) {
     return (unsigned int) input;
 }
 
-int registerPublicKey(unsigned int userID, unsigned int publicKey, char *serverIP, unsigned short serverPort) {
+int registerPublicKey(unsigned int userID, unsigned int publicKey) {
+    ServerConfig config = getServerConfig(PK);
     const PClientToPKServer requestMessage = {
         registerKey,
         userID,
@@ -124,7 +113,7 @@ int registerPublicKey(unsigned int userID, unsigned int publicKey, char *serverI
     char *requestBuffer = serializePKClientRequest(&requestMessage);
     char responseBuffer[PK_SERVER_RESPONSE_SIZE];
     const int sendStatus = synchronousSend(requestBuffer, PK_CLIENT_REQUEST_SIZE, responseBuffer,
-                                           PK_SERVER_RESPONSE_SIZE, serverIP, serverPort);
+                                           PK_SERVER_RESPONSE_SIZE, config.address, atoi(config.port));
     free(requestBuffer);
 
     if (sendStatus == ERROR) {
@@ -140,7 +129,7 @@ int registerPublicKey(unsigned int userID, unsigned int publicKey, char *serverI
     return sendStatus;
 }
 
-void lodiLogin(unsigned int userID, long timestamp, long digitalSignature, char *servIP, unsigned short servPort) {
+void lodiLogin(unsigned int userID, long timestamp, long digitalSignature) {
     const PClientToLodiServer clientMessage = {
         registerKey,
         userID,

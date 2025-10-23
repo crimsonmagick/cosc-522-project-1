@@ -96,33 +96,34 @@ int sendMessage(const int socket, const char *messageBuffer, const size_t messag
   return SUCCESS;
 }
 
+int errorClose(const char *errorMessage, const int socket) {
+  printf(errorMessage);
+  close(socket);
+  return ERROR;
+}
+
 int synchronousSend(const char *bufferIn, const size_t bufferInSize, char *bufferOut, const size_t bufferOutSize,
                     const char *serverIP, const unsigned short serverPort) {
   struct timeval timeout = {.tv_sec = TIMEOUT_SECONDS, .tv_usec = 0};
   const int clientSocket = getClientSocket(&timeout);
   if (clientSocket < 0) {
-    printf("Error: Unable to open socket.\n");
-    return ERROR;
+    return errorClose("Error: Unable to open socket.\n", clientSocket);
   }
   const struct sockaddr_in serverAddress = getNetworkAddress(serverIP, serverPort);
   const int sendStatus = sendMessage(clientSocket, bufferIn, bufferInSize, &serverAddress);
   if (sendStatus == ERROR) {
     printf("Error: Failed to send message.\n");
-    closeSocket(clientSocket);
-    return ERROR;
+    return errorClose("Error: Failed to send message.\n", clientSocket);
   }
 
   struct sockaddr_in receiveAddress;
   const int receiveStatus = receiveMessage(clientSocket, bufferOut, bufferOutSize, &receiveAddress);
   if (receiveStatus == ERROR) {
     printf("Error while receiving message.\n");
-    closeSocket(clientSocket);
-    return ERROR;
+    return errorClose("Error while receiving message.\n", clientSocket);
   }
   if (serverAddress.sin_addr.s_addr != receiveAddress.sin_addr.s_addr) {
-    printf("Error: received a packet from unknown source.");
-    closeSocket(clientSocket);
-    return ERROR;
+    return errorClose("Error: received a packet from an unknown source.\n", clientSocket);
   }
   closeSocket(clientSocket);
   return SUCCESS;

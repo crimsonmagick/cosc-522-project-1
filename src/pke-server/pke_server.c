@@ -5,14 +5,12 @@
 
 #include "messaging/pke_messaging.h"
 #include "messaging/udp.h"
+#include "util/server_configs.h"
 
-int main(int argc, char *argv[]) {
-  if (argc != 2) {
-    fprintf(stderr, "Usage: %s <UDP SERVER PORT>\n", argv[0]);
-    exit(EXIT_FAILURE);
-  }
+int main() {
 
-  const unsigned short serverPort = atoi(argv[1]);
+  const unsigned short serverPort = atoi(getServerConfig(PK).port);
+
   const int serverSocket = getServerSocket(serverPort, NULL);
   if (serverSocket < 0) {
     printf("Unable to create socket\n");
