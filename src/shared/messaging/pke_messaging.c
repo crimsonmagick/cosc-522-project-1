@@ -6,9 +6,8 @@
 #include "messaging/pke_messaging.h"
 #include "util/buffers.h"
 
-char *serializePKClientRequest(const PClientToPKServer *toSerialize, size_t *size) {
-  *size = PK_CLIENT_REQUEST_SIZE;
-  char *serialized = malloc(*size);
+char *serializePKClientRequest(const PClientToPKServer *toSerialize) {
+  char *serialized = malloc(PK_CLIENT_REQUEST_SIZE);
   if (!serialized) {
     return NULL;
   }
@@ -40,9 +39,8 @@ PClientToPKServer *deserializePKClientRequest(const char *serialized, const size
   return deserialized;
 }
 
-char *serializePKServerResponse(const PKServerToLodiClient *toSerialize, size_t *size) {
-  *size = PK_SERVER_RESPONSE_SIZE;
-  char *serialized = malloc(*size);
+char *serializePKServerResponse(const PKServerToLodiClient *toSerialize) {
+  char *serialized = malloc(PK_SERVER_RESPONSE_SIZE);
   if (!serialized) {
     return NULL;
   }

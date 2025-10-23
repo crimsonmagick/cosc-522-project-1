@@ -121,26 +121,23 @@ int registerPublicKey(unsigned int userID, unsigned int publicKey, char *serverI
         publicKey
     };
 
-    size_t requestSize;
-    char *requestSerialized = serializePKClientRequest(&requestMessage, &requestSize);
-    char *responseSerialized = malloc(PK_SERVER_RESPONSE_SIZE);
+    char *requestBuffer = serializePKClientRequest(&requestMessage);
+    char responseBuffer[PK_SERVER_RESPONSE_SIZE];
+    const int sendStatus = synchronousSend(requestBuffer, PK_CLIENT_REQUEST_SIZE, responseBuffer,
+                                           PK_SERVER_RESPONSE_SIZE, serverIP, serverPort);
+    free(requestBuffer);
 
-    int responseCode = sendAndReceiveMessage(requestSerialized, responseSerialized,
-                                   requestSize, PK_SERVER_RESPONSE_SIZE, serverIP,
-                                   serverPort);
-    if (responseCode == ERROR) {
-        printf("Error while sending message to PK Server\n");
+    if (sendStatus == ERROR) {
+        printf("Aborting registration...\n");
     } else {
         PKServerToLodiClient *responseDeserialized = deserializePKServerResponse(
-            responseSerialized, PK_SERVER_RESPONSE_SIZE);
+            responseBuffer, PK_SERVER_RESPONSE_SIZE);
         printf("Registration successful! Received: messageType=%u, userID=%u, publicKey=%u\n",
                responseDeserialized->messageType, responseDeserialized->userID, responseDeserialized->publicKey);
         free(responseDeserialized);
     }
 
-    free(requestSerialized);
-    free(responseSerialized);
-    return responseCode;
+    return sendStatus;
 }
 
 void lodiLogin(unsigned int userID, long timestamp, long digitalSignature, char *servIP, unsigned short servPort) {
@@ -155,8 +152,8 @@ void lodiLogin(unsigned int userID, long timestamp, long digitalSignature, char 
     char *requestSerialized = malloc(32);
     char *responseSerialized = malloc(8);
     // serializePClientToLodiServerRequest(clientMessage, requestSerialized);
-    sendAndReceiveMessage(requestSerialized, responseSerialized, 32, 8,
-                servIP, servPort);
+    // sendAndReceiveMessage(requestSerialized, responseSerialized, 32, 8,
+                          // servIP, servPort);
     PKServerToLodiClient responseDeserialized;
     // deserializePKServerResponse(responseSerialized, &responseDeserialized);
     printf("Registration successful! Received: messageType=%u, userID=%u, publicKey=%u\n",

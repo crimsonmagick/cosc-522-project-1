@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
   }
 
   const unsigned short serverPort = atoi(argv[1]);
-  const int serverSocket = getSocket(serverPort, NULL);
+  const int serverSocket = getServerSocket(serverPort, NULL);
   if (serverSocket < 0) {
     printf("Unable to create socket\n");
     exit(EXIT_FAILURE);
@@ -38,10 +38,9 @@ int main(int argc, char *argv[]) {
       receivedMessage->publicKey
     };
 
-    size_t sentMessageSize;
-    char* sendBuffer = serializePKServerResponse(&toSendMessage, &sentMessageSize);
+    char* sendBuffer = serializePKServerResponse(&toSendMessage);
 
-    const int sendSuccess = sendMessage(serverSocket, sendBuffer, sentMessageSize, &clientAddress);
+    const int sendSuccess = sendMessage(serverSocket, sendBuffer, PK_SERVER_RESPONSE_SIZE, &clientAddress);
     if (sendSuccess == ERROR) {
       printf("Error while sending message.\n");
     }

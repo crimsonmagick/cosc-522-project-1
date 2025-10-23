@@ -7,46 +7,9 @@
 #include "logging/logging.h"
 #include "messaging/udp.h"
 
-int sendAndReceiveMessage(char *clientMessageIn, char *serverMessageOut, size_t messageInSize, size_t messageOutSize,
-                          char *serverIP, unsigned short serverPort) {
-  int sock;
-  struct sockaddr_in fromAddr;
+#define TIMEOUT_SECONDS 5
 
-  if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-    logError("socket() failed");
-    return ERROR;
-  }
-
-  struct sockaddr_in serverAddr;
-  memset(&serverAddr, 0, sizeof(serverAddr));
-  serverAddr.sin_family = AF_INET;
-  inet_pton(AF_INET, serverIP, &serverAddr.sin_addr);
-  serverAddr.sin_port = htons(serverPort);
-
-  if (sendto(sock, clientMessageIn, messageInSize, 0, (struct sockaddr *)
-             &serverAddr, sizeof(serverAddr)) != messageInSize) {
-    logError("sendto() sent a different number of bytes than expected");
-    return ERROR;
-  }
-
-  socklen_t fromSize = sizeof(fromAddr);
-
-  if (recvfrom(sock, serverMessageOut, messageOutSize, 0,
-               (struct sockaddr *) &fromAddr, &fromSize) != messageOutSize) {
-    logError("recvfrom() failed");
-    return ERROR;
-  }
-
-  if (serverAddr.sin_addr.s_addr != fromAddr.sin_addr.s_addr) {
-    fprintf(stderr, "Error: received a packet from unknown source.\n");
-    return ERROR;
-  }
-
-  close(sock);
-  return SUCCESS;
-}
-
-int getSocket(const unsigned short serverPort, const char *address) {
+int getServerSocket(const unsigned short serverPort, const char *address) {
   const int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if (sock < 0) {
     logError("socket() failed");
@@ -72,6 +35,26 @@ int getSocket(const unsigned short serverPort, const char *address) {
   return sock;
 }
 
+int getClientSocket(const struct timeval *timeout) {
+  const int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+  if (sock >= 0 && timeout) {
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, timeout, sizeof(*timeout));
+  }
+  return sock;
+}
+
+int closeSocket(const int socket) {
+  return close(socket);
+}
+
+struct sockaddr_in getNetworkAddress(const char *serverIP, const unsigned short serverPort) {
+  struct sockaddr_in serverAddr;
+  memset(&serverAddr, 0, sizeof(serverAddr));
+  serverAddr.sin_family = AF_INET;
+  inet_pton(AF_INET, serverIP, &serverAddr.sin_addr);
+  serverAddr.sin_port = htons(serverPort);
+  return serverAddr;
+}
 
 int receiveMessage(const int socket, char *message, const size_t messageSize, struct sockaddr_in *clientAddress) {
   socklen_t clientAddrLen = sizeof(*clientAddress);
@@ -110,5 +93,37 @@ int sendMessage(const int socket, const char *messageBuffer, const size_t messag
     return ERROR;
   }
 
+  return SUCCESS;
+}
+
+int synchronousSend(const char *bufferIn, const size_t bufferInSize, char *bufferOut, const size_t bufferOutSize,
+                    const char *serverIP, const unsigned short serverPort) {
+  struct timeval timeout = {.tv_sec = TIMEOUT_SECONDS, .tv_usec = 0};
+  const int clientSocket = getClientSocket(&timeout);
+  if (clientSocket < 0) {
+    printf("Error: Unable to open socket.\n");
+    return ERROR;
+  }
+  const struct sockaddr_in serverAddress = getNetworkAddress(serverIP, serverPort);
+  const int sendStatus = sendMessage(clientSocket, bufferIn, bufferInSize, &serverAddress);
+  if (sendStatus == ERROR) {
+    printf("Error: Failed to send message.\n");
+    closeSocket(clientSocket);
+    return ERROR;
+  }
+
+  struct sockaddr_in receiveAddress;
+  const int receiveStatus = receiveMessage(clientSocket, bufferOut, bufferOutSize, &receiveAddress);
+  if (receiveStatus == ERROR) {
+    printf("Error while receiving message.\n");
+    closeSocket(clientSocket);
+    return ERROR;
+  }
+  if (serverAddress.sin_addr.s_addr != receiveAddress.sin_addr.s_addr) {
+    printf("Error: received a packet from unknown source.");
+    closeSocket(clientSocket);
+    return ERROR;
+  }
+  closeSocket(clientSocket);
   return SUCCESS;
 }

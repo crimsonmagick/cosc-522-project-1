@@ -18,11 +18,11 @@ typedef struct {
   unsigned int publicKey; /* user's public key or 0 if message_type is request_key */
 } PClientToPKServer;
 
-char *serializePKClientRequest(const PClientToPKServer *toSerialize, size_t *size);
+char *serializePKClientRequest(const PClientToPKServer *toSerialize);
 
 PClientToPKServer *deserializePKClientRequest(const char *serialized, const size_t size);
 
-char * serializePKServerResponse(const PKServerToLodiClient *toSerialize, size_t *size);
+char * serializePKServerResponse(const PKServerToLodiClient *toSerialize);
 
 PKServerToLodiClient *deserializePKServerResponse(const char *serialized, const size_t size);
 
