@@ -5,6 +5,7 @@
 #include <string.h>     /* for memset() */
 #include <unistd.h>     /* for close() */
 #include <time.h>
+#include <math.h>
 
 #include "messaging/pke_messaging.h"
 #include "messaging/lodi_messaging.h"
@@ -65,8 +66,10 @@ int main() {
 }
 
 long encryptTimestamp(long timestamp, unsigned int privateKey) {
-    // TODO encrpytion nonesense
-    return timestamp + 1;
+    int p = 3;
+    int q = 5;
+    int toBeModuloed = p * q;
+    return (long) pow((double) timestamp, privateKey) % toBeModuloed;
 }
 
 int getOption() {

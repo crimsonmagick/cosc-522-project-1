@@ -22,6 +22,8 @@ add_executable(lodi_client
     src/lodi-client/lodi_client.c
     ${COMMON_SRC}
 )
+target_link_libraries(lodi_client PRIVATE m)
+
 add_executable(lodi_server
     src/lodi-server/lodi_server.c
     ${COMMON_SRC}
