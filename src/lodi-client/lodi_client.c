@@ -23,7 +23,7 @@ long encryptTimestamp(long timestamp, unsigned int privateKey);
 
 int registerPublicKey(unsigned int userID, unsigned int publicKey);
 
-void lodiLogin(unsigned int userID, long timestamp, long digitalSignature);
+int lodiLogin(unsigned int userID, long timestamp, long digitalSignature);
 
 int main() {
 
@@ -102,8 +102,8 @@ unsigned int getIntInput(char *inputName) {
     return (unsigned int) input;
 }
 
-int registerPublicKey(unsigned int userID, unsigned int publicKey) {
-    ServerConfig config = getServerConfig(PK);
+int registerPublicKey(const unsigned int userID, const unsigned int publicKey) {
+    const ServerConfig config = getServerConfig(PK);
     const PClientToPKServer requestMessage = {
         registerKey,
         userID,
@@ -129,24 +129,31 @@ int registerPublicKey(unsigned int userID, unsigned int publicKey) {
     return sendStatus;
 }
 
-void lodiLogin(unsigned int userID, long timestamp, long digitalSignature) {
-    const PClientToLodiServer clientMessage = {
-        registerKey,
-        userID,
-        0,
-        timestamp,
-        digitalSignature
+int lodiLogin(const unsigned int userID, const long timestamp, const long digitalSignature) {
+    const ServerConfig config = getServerConfig(LODI);
+    const PClientToLodiServer requestMessage = {
+        .messageType = login,
+        .userID = userID,
+        .recipientID = 0,
+        .timestamp = timestamp,
+        .digitalSig = digitalSignature
     };
 
-    char *requestSerialized = malloc(32);
-    char *responseSerialized = malloc(8);
-    // serializePClientToLodiServerRequest(clientMessage, requestSerialized);
-    // sendAndReceiveMessage(requestSerialized, responseSerialized, 32, 8,
-                          // servIP, servPort);
-    PKServerToLodiClient responseDeserialized;
-    // deserializePKServerResponse(responseSerialized, &responseDeserialized);
-    printf("Registration successful! Received: messageType=%u, userID=%u, publicKey=%u\n",
-           responseDeserialized.messageType, responseDeserialized.userID, responseDeserialized.publicKey);
-    free(requestSerialized);
-    free(responseSerialized);
+    char *requestBuffer = serializeLodiServerRequest(&requestMessage);
+    char responseBuffer[LODI_CLIENT_REQUEST_SIZE];
+    const int sendStatus = synchronousSend(requestBuffer, LODI_CLIENT_REQUEST_SIZE, responseBuffer,
+                                           LODI_SERVER_RESPONSE_SIZE, config.address, atoi(config.port));
+    free(requestBuffer);
+
+    if (sendStatus == ERROR) {
+        printf("Aborting registration...\n");
+    } else {
+        PKServerToLodiClient *responseDeserialized = deserializePKServerResponse(
+            responseBuffer, LODI_SERVER_RESPONSE_SIZE);
+        printf("Registration successful! Received: messageType=%u, userID=%u, publicKey=%u\n",
+               responseDeserialized->messageType, responseDeserialized->userID, responseDeserialized->publicKey);
+        free(responseDeserialized);
+    }
+
+    return sendStatus;
 }
