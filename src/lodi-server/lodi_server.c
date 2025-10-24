@@ -20,7 +20,7 @@ int main() {
     struct sockaddr_in clientAddress;
 
     char receivedBuffer[LODI_CLIENT_REQUEST_SIZE];
-    const int receivedSuccess = receiveMessage(serverSocket, receivedBuffer, LODI_SERVER_RESPONSE_SIZE, &clientAddress);
+    const int receivedSuccess = receiveMessage(serverSocket, receivedBuffer, LODI_CLIENT_REQUEST_SIZE, &clientAddress);
 
     if (receivedSuccess == ERROR) {
       printf("Failed to handle incoming PClientToLodiServer message.\n");

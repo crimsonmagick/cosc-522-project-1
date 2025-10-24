@@ -7,7 +7,7 @@
 #include "logging/logging.h"
 #include "messaging/udp.h"
 
-#define TIMEOUT_SECONDS 5
+#define TIMEOUT_SECONDS 0
 
 int getServerSocket(const unsigned short serverPort, const char *address) {
   const int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);

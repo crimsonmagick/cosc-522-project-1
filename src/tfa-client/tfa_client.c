@@ -11,7 +11,7 @@
 #define LOGIN_OPTION 2
 #define QUIT_OPTION 3
 
-int getOption();
+int getMainOption();
 
 unsigned int getIntInput(char *inputName);
 
@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
 
     int selected = 0;
     while (selected != QUIT_OPTION) {
-        selected = getOption();
+        selected = getMainOption();
 
         unsigned int publicKey;
         switch (selected) {
@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
     exit(0);
 }
 
-int getOption() {
+int getMainOption() {
     printf("1. Register your Lodi Key\n");
     printf("2. Login to Lodi\n");
     printf("3. Exit\n");

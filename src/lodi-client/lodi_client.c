@@ -6,6 +6,7 @@
 #include <unistd.h>     /* for close() */
 #include <time.h>
 #include <math.h>
+#include <stdbool.h>
 
 #include "messaging/pke_messaging.h"
 #include "messaging/lodi_messaging.h"
@@ -16,7 +17,7 @@
 #define LOGIN_OPTION 2
 #define QUIT_OPTION 3
 
-int getOption();
+int getMainOption();
 
 unsigned int getIntInput(char *inputName);
 
@@ -36,7 +37,7 @@ int main() {
 
     int selected = 0;
     while (selected != QUIT_OPTION) {
-        selected = getOption();
+        selected = getMainOption();
 
         unsigned int publicKey;
         unsigned int privateKey;
@@ -66,11 +67,9 @@ int main() {
     exit(0);
 }
 
-long long longPow(long base, long exp)
-{
+long long longPow(long base, long exp) {
     long long result = 1;
-    for (;;)
-    {
+    for (;;) {
         if (exp & 1)
             result *= base;
         exp >>= 1;
@@ -95,10 +94,22 @@ long encryptTimestamp(long timestamp, unsigned int privateKey) {
     return moduloResult;
 }
 
-int getOption() {
+int getMainOption() {
     printf("1. Register your Lodi Key\n");
     printf("2. Login to Lodi\n");
     printf("3. Exit\n");
+
+    int selected = 0;
+    char line[64];
+
+    if (fgets(line, sizeof(line), stdin)) {
+        sscanf(line, "%d", &selected);
+    }
+    return selected;
+}
+
+int getLodiLoopOption() {
+    printf("1. Exit to main menu\n");
 
     int selected = 0;
     char line[64];
@@ -174,12 +185,22 @@ int lodiLogin(const unsigned int userID, const long timestamp, const long digita
     if (sendStatus == ERROR) {
         printf("Aborting registration...\n");
     } else {
-        PKServerToLodiClient *responseDeserialized = deserializePKServerResponse(
+        LodiServerToLodiClientAcks *responseDeserialized = deserializeLodiServerResponse(
             responseBuffer, LODI_SERVER_RESPONSE_SIZE);
-        printf("Registration successful! Received: messageType=%u, userID=%u, publicKey=%u\n",
-               responseDeserialized->messageType, responseDeserialized->userID, responseDeserialized->publicKey);
+        printf("Login successful! Received: messageType=%u, userID=%u\n",
+               responseDeserialized->messageType, responseDeserialized->userID);
         free(responseDeserialized);
     }
 
+    printf("Please select from our many amazing Lodi options:\n");
+
+    int selected = 0;
+    while (selected != 1) {
+        selected = getLodiLoopOption();
+
+        if (selected != 1) {
+            printf("Please enter a valid option: 1\n");
+        }
+    }
     return sendStatus;
 }
