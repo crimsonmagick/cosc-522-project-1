@@ -26,10 +26,11 @@ int registerPublicKey(unsigned int userID, unsigned int publicKey);
 
 int lodiLogin(unsigned int userID, long timestamp, long digitalSignature);
 
-long long longPow(long base, long exp);
+unsigned long long *bigPow(long base, long exp, int* returnLen);
 
 int main() {
     long test = 3782446976348723463;
+    long long result = bigPow(1761340279, 10);
     printf("Welcome to the Lodi Client!\n");
     unsigned int userID = getIntInput("user ID");
     printf("Now choose from the following options:\n");
@@ -66,30 +67,40 @@ int main() {
     exit(0);
 }
 
-long long longPow(long base, long exp)
-{
+/**
+ * TODO handle very large numbers
+ * @param base
+ * @param exp
+ * @return
+ */
+unsigned long long *bigPow(long base, long exp, int* returnLen) {
     long long result = 1;
+    long long temp = base;
     for (;;)
     {
-        if (exp & 1)
-            result *= base;
+        if (exp & 1) {
+            result *= temp;
+        }
         exp >>= 1;
-        if (!exp)
+        if (!exp) {
             break;
-        base *= base;
+        }
+        temp *= temp;
         if (result < 0) {
             break;
         }
     }
-
-    return result;
+    *returnLen = 1;
+    long long *retValue = malloc(sizeof(long long));
+    retValue[0] = result;
+    return retValue;
 }
 
 long encryptTimestamp(long timestamp, unsigned int privateKey) {
     long p = 3;
     long q = 5;
     long toBeModuloed = p * q;
-    long long powResult = longPow(timestamp, privateKey);
+    long long *powResult = bigPow(timestamp, privateKey);
     long longPowResult = (long) powResult;
     long moduloResult = longPowResult % toBeModuloed;
     return moduloResult;
