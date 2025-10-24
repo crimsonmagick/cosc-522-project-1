@@ -26,6 +26,8 @@ int registerPublicKey(unsigned int userID, unsigned int publicKey);
 
 int lodiLogin(unsigned int userID, long timestamp, long digitalSignature);
 
+long long longPow(long base, long exp);
+
 int main() {
     long test = 3782446976348723463;
     printf("Welcome to the Lodi Client!\n");
@@ -64,16 +66,31 @@ int main() {
     exit(0);
 }
 
-long multiply(int x, int y) {
+long long longPow(long base, long exp)
+{
+    long long result = 1;
+    for (;;)
+    {
+        if (exp & 1)
+            result *= base;
+        exp >>= 1;
+        if (!exp)
+            break;
+        base *= base;
+        if (result < 0) {
+            break;
+        }
+    }
 
+    return result;
 }
 
 long encryptTimestamp(long timestamp, unsigned int privateKey) {
     long p = 3;
     long q = 5;
-    unsigned long toBeModuloed = p * q;
-    long double powResult = powl(timestamp, privateKey);
-    unsigned long longPowResult = (long) powResult;
+    long toBeModuloed = p * q;
+    long long powResult = longPow(timestamp, privateKey);
+    long longPowResult = (long) powResult;
     long moduloResult = longPowResult % toBeModuloed;
     return moduloResult;
 }
