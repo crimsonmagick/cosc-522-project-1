@@ -1,5 +1,9 @@
 #ifndef COSC522_LODI_TFAMESSAGING_H
 #define COSC522_LODI_TFAMESSAGING_H
+
+#define TFA_CLIENT_REQUEST_SIZE (2 * sizeof(uint32_t) + 2 * sizeof(uint64_t))
+#define TFA_SERVER_RESPONSE_SIZE (2 * sizeof(uint32_t))
+
 typedef struct {
   enum { registerTFA, ackRegTFA, ackPushTFA, requestAuth } messageType; /* same size as an unsigned int */
   unsigned int userID; /* user identifier */
@@ -12,5 +16,12 @@ typedef struct {
   unsigned int userID; /* user identifier*/
 } TFAServerToTFAClient;
 
+char *serializeTFAClientRequest(const TFAClientOrLodiServerToTFAServer *toSerialize);
+
+TFAClientOrLodiServerToTFAServer *deserializeTFAClientRequest(const char *serialized, const size_t size);
+
+char *serializeTFAServerResponse(const TFAServerToTFAClient *toSerialize);
+
+TFAServerToTFAClient *deserializeTFAServerResponse(const char *serialized, const size_t size);
 
 #endif //COSC522_LODI_TFAMESSAGING_H

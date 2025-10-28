@@ -1,61 +1,51 @@
 #include <stdio.h>
-#include <sys/socket.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 #include <stdbool.h>
-#include "messaging/pke_messaging.h"
-#include "logging/logging.h"
 
-int main(int argc, char *argv[]) {
-    struct sockaddr_in serverAddr;
-    struct sockaddr_in clientAddr;
+#include "messaging/tfa_messaging.h"
+#include "messaging/udp.h"
+#include "util/server_configs.h"
 
-    if (argc != 2) {
-        fprintf(stderr, "Usage: %s <UDP SERVER PORT>\n", argv[0]);
-        exit(1);
-    }
+int main() {
+    const unsigned short serverPort = atoi(getServerConfig(TFA).port);
 
-    const unsigned short serverPort = atoi(argv[1]);
-    const int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (sock < 0) {
-        logError("socket() failed");
-        exit(1);
-    }
-
-    memset(&serverAddr, 0, sizeof(serverAddr));
-    serverAddr.sin_family = AF_INET;
-    serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    serverAddr.sin_port = htons(serverPort);
-
-    if (bind(sock, (struct sockaddr *) &serverAddr, sizeof(serverAddr)) < 0) {
-        logError("bind() failed");
-        exit(1);
+    const int serverSocket = getServerSocket(serverPort, NULL);
+    if (serverSocket < 0) {
+        printf("Unable to create socket\n");
+        exit(EXIT_FAILURE);
     }
 
     while (true) {
-        PClientToPKServer receivedMessage;
+        struct sockaddr_in clientAddress;
 
-        socklen_t clientAddrLen = sizeof(clientAddr);
-        if (recvfrom(sock, &receivedMessage, sizeof(receivedMessage), 0,
-                     (struct sockaddr *) &clientAddr, &clientAddrLen) < 0) {
-            logError("recvfrom() failed");
+        char receivedBuffer[TFA_CLIENT_REQUEST_SIZE];
+        const int receivedSuccess = receiveMessage(serverSocket, receivedBuffer, TFA_CLIENT_REQUEST_SIZE, &clientAddress);
+
+        if (receivedSuccess == ERROR) {
+            printf("Failed to handle incoming TFAClientOrLodiServerToTFAServer message.\n");
+            continue;
         }
 
-        char clientAddress[INET_ADDRSTRLEN];
-        inet_ntop(AF_INET, &clientAddr.sin_addr, clientAddress, INET_ADDRSTRLEN);
-        printf("Handling client %s\n", clientAddress);
+        TFAClientOrLodiServerToTFAServer *receivedMessage = deserializeTFAClientRequest(receivedBuffer, TFA_CLIENT_REQUEST_SIZE);
 
-        PKServerToPClientOrLodiServer toSendMessage = {
-            ackRegisterKey,
-            receivedMessage.userID,
-            receivedMessage.publicKey
-        };
+        // TODO connect to PKE and get publicKey, validate publicKey,
+        // TODO connect to TFA server and get two factor auth confirmation
 
-        if (sendto(sock, &toSendMessage, sizeof(toSendMessage), 0,
-                   (struct sockaddr *) &clientAddr, sizeof(clientAddr)) != sizeof(toSendMessage)) {
-            logError("sendto() sent a different number of bytes than expected");
+        TFAServerToTFAClient toSendMessage = {
+            confirmTFA,
+            receivedMessage->userID,
+          };
+
+        char* sendBuffer = serializeTFAServerResponse(&toSendMessage);
+
+        const int sendSuccess = sendMessage(serverSocket, sendBuffer, TFA_SERVER_RESPONSE_SIZE, &clientAddress);
+        if (sendSuccess == ERROR) {
+            printf("Error while sending message.\n");
         }
+
+        free(sendBuffer);
+        free(receivedMessage);
     }
+
 }

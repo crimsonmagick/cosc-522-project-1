@@ -4,8 +4,14 @@
 #include <stdlib.h>     /* for atoi() and exit() */
 #include <string.h>     /* for memset() */
 #include <unistd.h>     /* for close() */
-#include "messaging/pke_messaging.h"
-#include "logging/logging.h"
+#include <time.h>
+#include <math.h>
+#include <stdbool.h>
+
+#include "messaging/tfa_messaging.h"
+#include "messaging/udp.h"
+#include "util/rsa.h"
+#include "util/server_configs.h"
 
 #define REGISTER_OPTION 1
 #define LOGIN_OPTION 2
@@ -13,77 +19,36 @@
 
 int getMainOption();
 
-unsigned int getLongInput(char *inputName);
+unsigned long getLongInput(char *inputName);
 
-int registerPublicKey(unsigned int userID, unsigned int publicKey, char *serverIP, unsigned short serverPort);
+int registerTFAClient(const unsigned int userID, unsigned long timestamp, unsigned long digitalSignature);
 
-int main(int argc, char *argv[]) {
-    if (argc < 2 || argc > 3) {
-        fprintf(stderr, "Usage: %s <Server IP> [<Echo Port>]\n", argv[0]);
-        exit(1);
-    }
+int lodiLogin(unsigned int userID, long timestamp, long digitalSignature);
 
-    char *servIP = argv[1];
 
-    unsigned short servPort; /* Echo server port */
-
-    if (argc == 3)
-        servPort = atoi(argv[2]); /* Use given port, if any */
-    else
-        servPort = 7;
-
-    printf("Welcome to the Lodi Client!\n");
+int main() {
+    printf("Welcome to the TFA Client!\n");
     unsigned int userID = getLongInput("user ID");
-    printf("Now choose from the following options:\n");
+    unsigned long privateKey = getLongInput("private key");
+    unsigned long timestamp;
+    unsigned long digitalSignature;
 
-    int selected = 0;
-    while (selected != QUIT_OPTION) {
-        selected = getMainOption();
+    time(&timestamp);
+    digitalSignature = encryptTimestamp(timestamp, privateKey, MODULUS);
 
-        unsigned int publicKey;
-        switch (selected) {
-            case REGISTER_OPTION:
-                publicKey = getLongInput("public key");
-                registerPublicKey(userID, publicKey, servIP, servPort);
-                break;
-            case LOGIN_OPTION:
-                printf("TODO login dialogue\n");
-                break;
-            case QUIT_OPTION:
-                printf("See you later!\n");
-                break;
-            default:
-                printf("Please enter a valid option: %d, %d, or %d\n",
-                       REGISTER_OPTION, LOGIN_OPTION, QUIT_OPTION);
-                break;
-        }
-    }
+    registerTFAClient(userID, timestamp, digitalSignature);
 
     exit(0);
 }
 
-int getMainOption() {
-    printf("1. Register your Lodi Key\n");
-    printf("2. Login to Lodi\n");
-    printf("3. Exit\n");
-
-    int selected = 0;
-    char line[64];
-
-    if (fgets(line, sizeof(line), stdin)) {
-        sscanf(line, "%d", &selected);
-    }
-    return selected;
-}
-
-unsigned int getLongInput(char *inputName) {
-    int input = -1;
+unsigned long getLongInput(char *inputName) {
+    long input = -1;
     while (input < 0) {
         printf("Please enter your %s:\n", inputName);
         char line[64];
 
         if (fgets(line, sizeof(line), stdin)) {
-            sscanf(line, "%d", &input);
+            sscanf(line, "%ld", &input);
             if (sscanf(line, "%d", &input) != 1 || input < 0) {
                 printf("Invalid %s entered. Please try again!\n", inputName);
             }
@@ -92,46 +57,32 @@ unsigned int getLongInput(char *inputName) {
         }
     }
 
-    return (unsigned int) input;
+    return (unsigned long) input;
 }
 
-int registerPublicKey(unsigned int userID, unsigned int publicKey, char *serverIP, unsigned short serverPort) {
-    int sock; /* Socket descriptor */
-    struct sockaddr_in fromAddr; /* Source address of echo */
-    PKServerToPClientOrLodiServer serverMessage;
-    const PClientToPKServer clientMessage = {
-        registerKey,
+int registerTFAClient(const unsigned int userID, unsigned long timestamp, unsigned long digitalSignature) {
+    const ServerConfig config = getServerConfig(TFA);
+    const TFAClientOrLodiServerToTFAServer requestMessage = {
         userID,
-        publicKey
+        timestamp,
+        digitalSignature
     };
 
-    /* Create a datagram/UDP socket */
-    if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
-        logError("socket() failed");
+    char *requestBuffer = serializeTFAClientRequest(&requestMessage);
+    char responseBuffer[TFA_SERVER_RESPONSE_SIZE];
+    const int sendStatus = synchronousSend(requestBuffer, TFA_CLIENT_REQUEST_SIZE, responseBuffer,
+                                           TFA_SERVER_RESPONSE_SIZE, config.address, atoi(config.port));
+    free(requestBuffer);
 
-    /* Construct the server address structure */
-    struct sockaddr_in serverAddr;
-    memset(&serverAddr, 0, sizeof(serverAddr));
-    serverAddr.sin_family = AF_INET;
-    inet_pton(AF_INET, serverIP, &serverAddr.sin_addr);
-    serverAddr.sin_port = htons(serverPort);
-
-    if (sendto(sock, &clientMessage, sizeof(clientMessage), 0, (struct sockaddr *)
-               &serverAddr, sizeof(serverAddr)) != sizeof(clientMessage))
-        logError("sendto() sent a different number of bytes than expected");
-
-    socklen_t fromSize = sizeof(fromAddr);
-    if (recvfrom(sock, &serverMessage, sizeof(serverMessage), 0,
-                 (struct sockaddr *) &fromAddr, &fromSize) != sizeof(serverMessage))
-        logError("recvfrom() failed");
-
-    if (serverAddr.sin_addr.s_addr != fromAddr.sin_addr.s_addr) {
-        fprintf(stderr, "Error: received a packet from unknown source.\n");
-        exit(1);
+    if (sendStatus == ERROR) {
+        printf("Aborting registration...\n");
+    } else {
+        TFAServerToTFAClient *responseDeserialized = deserializeTFAServerResponse(
+            responseBuffer, TFA_SERVER_RESPONSE_SIZE);
+        printf("TFA registration successful! Received: messageType=%u, userID=%u",
+               responseDeserialized->messageType, responseDeserialized->userID);
+        free(responseDeserialized);
     }
 
-    printf("Received: %u, %u, %u\n", serverMessage.messageType, serverMessage.userID, serverMessage.publicKey);
-
-    close(sock);
-    return 0;
+    return sendStatus;
 }

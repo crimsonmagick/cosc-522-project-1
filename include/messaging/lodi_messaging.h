@@ -1,6 +1,9 @@
 #ifndef LODI_LODIMESSAGING_H
 #define LODI_LODIMESSAGING_H
 
+#define LODI_CLIENT_REQUEST_SIZE (3 * sizeof(uint32_t) + 2 * sizeof(uint64_t))
+#define LODI_SERVER_RESPONSE_SIZE (2 * sizeof(uint32_t))
+
 typedef struct {
   enum { ackLogin } messageType; /* same size as an unsigned int */
   unsigned int userID; /* user identifier */
@@ -14,9 +17,6 @@ typedef struct {
   unsigned long timestamp; /* timestamp */
   unsigned long digitalSig; /* encrypted timestamp */
 } PClientToLodiServer;
-
-#define LODI_CLIENT_REQUEST_SIZE (3 * sizeof(uint32_t) + 2 * sizeof(uint64_t))
-#define LODI_SERVER_RESPONSE_SIZE (2 * sizeof(uint32_t))
 
 char *serializeLodiServerRequest(const PClientToLodiServer *toSerialize);
 
