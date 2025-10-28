@@ -11,6 +11,7 @@
 #include "messaging/pke_messaging.h"
 #include "messaging/lodi_messaging.h"
 #include "messaging/udp.h"
+#include "util/rsa.h"
 #include "util/server_configs.h"
 
 #define REGISTER_OPTION 1
@@ -27,24 +28,12 @@ int getMainOption();
 
 unsigned int getIntInput(char *inputName);
 
-unsigned long encryptTimestamp(unsigned long timestamp, unsigned long privateKey, unsigned long modulus);
-
-unsigned long decryptTimestamp(unsigned long encrypted, unsigned long publicKey, unsigned long modulus);
-
-
 int registerPublicKey(unsigned int userID, unsigned int publicKey);
 
 int lodiLogin(unsigned int userID, long timestamp, long digitalSignature);
 
-KeyGenResult generateKeys(const unsigned int p, const unsigned int q);
 
 int main() {
-    KeyGenResult keys = generateKeys(61, 53);
-    long ts = 1625;
-    long test = 1000000000000;
-//    time(&ts);
-    unsigned long encrypted = encryptTimestamp(ts, keys.private, keys.modulus);
-    unsigned long decrypted = decryptTimestamp(encrypted, keys.public, keys.modulus);
     printf("Welcome to the Lodi Client!\n");
     unsigned int userID = getIntInput("user ID");
     printf("Now choose from the following options:\n");
@@ -59,13 +48,15 @@ int main() {
         long digitalSignature;
         switch (selected) {
             case REGISTER_OPTION:
+                // TODO look into generating public/private key pair either here or as another option
                 publicKey = getIntInput("public key");
                 registerPublicKey(userID, publicKey);
                 break;
             case LOGIN_OPTION:
+                // TODO look into reusing generated private key
                 privateKey = getIntInput("private key");
                 time(&timestamp);
-                digitalSignature = encryptTimestamp(timestamp, privateKey, 1);
+                digitalSignature = encryptTimestamp(timestamp, privateKey, MODULUS);
                 lodiLogin(userID, timestamp, digitalSignature);
                 break;
             case QUIT_OPTION:
@@ -80,64 +71,6 @@ int main() {
 
     exit(0);
 }
-
-// adapted from https://en.wikipedia.org/wiki/Euclidean_algorithm
-unsigned long gcd(unsigned long a, unsigned long b) {
-    while (b != 0) {
-        const unsigned long temp = b;
-        b = a % b;
-        a = temp;
-    }
-    return a;
-}
-
-KeyGenResult generateKeys(const unsigned int p, const unsigned int q) {
-    unsigned long n = p * q;
-    unsigned long phiResult = (p - 1) * (q - 1);
-    // TODO randomize
-    unsigned long e = 12;
-    while(gcd(e, phiResult) != 1) {
-        e++;
-    }
-    unsigned long d = 1;
-    while((d * e) % phiResult != 1) {
-        d++;
-    }
-    KeyGenResult result = {
-            .private = d,
-            .public = e,
-            .modulus = n
-    };
-    return result;
-}
-
-
-// Based on https://en.wikipedia.org/wiki/Modular_exponentiation
-unsigned long modPow(unsigned long base, unsigned long exponent, unsigned long modulus) {
-    if (modulus == 1) {
-        return 0;
-    }
-
-    unsigned long result = 1;
-    base = base % modulus;
-    while (exponent > 0) {
-        if (exponent % 2 == 1) {
-            result = result * base % modulus;
-        }
-        base = base * base % modulus;
-        exponent = exponent >> 1;
-    }
-    return result;
-}
-
-unsigned long encryptTimestamp(unsigned long timestamp, unsigned long privateKey, unsigned long modulus) {
-    return modPow(timestamp, privateKey, modulus);
-}
-
-unsigned long decryptTimestamp(unsigned long encrypted, unsigned long publicKey, unsigned long modulus) {
-    return modPow(encrypted, publicKey, modulus);
-}
-
 
 int getMainOption() {
     printf("1. Register your Lodi Key\n");
