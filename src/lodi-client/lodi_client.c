@@ -17,20 +17,34 @@
 #define LOGIN_OPTION 2
 #define QUIT_OPTION 3
 
+typedef struct {
+    unsigned long private;
+    unsigned long public;
+    unsigned long modulus;
+} KeyGenResult;
+
 int getMainOption();
 
 unsigned int getIntInput(char *inputName);
 
-long encryptTimestamp(long timestamp, unsigned int privateKey);
+unsigned long encryptTimestamp(unsigned long timestamp, unsigned long privateKey, unsigned long modulus);
+
+unsigned long decryptTimestamp(unsigned long encrypted, unsigned long publicKey, unsigned long modulus);
+
 
 int registerPublicKey(unsigned int userID, unsigned int publicKey);
 
 int lodiLogin(unsigned int userID, long timestamp, long digitalSignature);
 
-long long longPow(long base, long exp);
+KeyGenResult generateKeys(const unsigned int p, const unsigned int q);
 
 int main() {
-    long test = 3782446976348723463;
+    KeyGenResult keys = generateKeys(61, 53);
+    long ts = 1625;
+    long test = 1000000000000;
+//    time(&ts);
+    unsigned long encrypted = encryptTimestamp(ts, keys.private, keys.modulus);
+    unsigned long decrypted = decryptTimestamp(encrypted, keys.public, keys.modulus);
     printf("Welcome to the Lodi Client!\n");
     unsigned int userID = getIntInput("user ID");
     printf("Now choose from the following options:\n");
@@ -51,7 +65,7 @@ int main() {
             case LOGIN_OPTION:
                 privateKey = getIntInput("private key");
                 time(&timestamp);
-                digitalSignature = encryptTimestamp(timestamp, privateKey);
+                digitalSignature = encryptTimestamp(timestamp, privateKey, 1);
                 lodiLogin(userID, timestamp, digitalSignature);
                 break;
             case QUIT_OPTION:
@@ -67,32 +81,63 @@ int main() {
     exit(0);
 }
 
-long long longPow(long base, long exp) {
-    long long result = 1;
-    for (;;) {
-        if (exp & 1)
-            result *= base;
-        exp >>= 1;
-        if (!exp)
-            break;
-        base *= base;
-        if (result < 0) {
-            break;
-        }
+// adapted from https://en.wikipedia.org/wiki/Euclidean_algorithm
+unsigned long gcd(unsigned long a, unsigned long b) {
+    while (b != 0) {
+        const unsigned long temp = b;
+        b = a % b;
+        a = temp;
     }
+    return a;
+}
 
+KeyGenResult generateKeys(const unsigned int p, const unsigned int q) {
+    unsigned long n = p * q;
+    unsigned long phiResult = (p - 1) * (q - 1);
+    // TODO randomize
+    unsigned long e = 12;
+    while(gcd(e, phiResult) != 1) {
+        e++;
+    }
+    unsigned long d = 1;
+    while((d * e) % phiResult != 1) {
+        d++;
+    }
+    KeyGenResult result = {
+            .private = d,
+            .public = e,
+            .modulus = n
+    };
     return result;
 }
 
-long encryptTimestamp(long timestamp, unsigned int privateKey) {
-    long p = 3;
-    long q = 5;
-    long toBeModuloed = p * q;
-    long long powResult = longPow(timestamp, privateKey);
-    long longPowResult = (long) powResult;
-    long moduloResult = longPowResult % toBeModuloed;
-    return moduloResult;
+
+// Based on https://en.wikipedia.org/wiki/Modular_exponentiation
+unsigned long modPow(unsigned long base, unsigned long exponent, unsigned long modulus) {
+    if (modulus == 1) {
+        return 0;
+    }
+
+    unsigned long result = 1;
+    base = base % modulus;
+    while (exponent > 0) {
+        if (exponent % 2 == 1) {
+            result = result * base % modulus;
+        }
+        base = base * base % modulus;
+        exponent = exponent >> 1;
+    }
+    return result;
 }
+
+unsigned long encryptTimestamp(unsigned long timestamp, unsigned long privateKey, unsigned long modulus) {
+    return modPow(timestamp, privateKey, modulus);
+}
+
+unsigned long decryptTimestamp(unsigned long encrypted, unsigned long publicKey, unsigned long modulus) {
+    return modPow(encrypted, publicKey, modulus);
+}
+
 
 int getMainOption() {
     printf("1. Register your Lodi Key\n");
