@@ -65,7 +65,8 @@ unsigned long decryptTimestamp(unsigned long encrypted, unsigned long publicKey,
 
 int main() {
     KeyGenResult keys = generateKeys(61, 53);
-    long timestamp = 1625;
+    long timestamp = 3233; // breaks!
+    // long timestamp = 3232;
     //    time(&ts);
     unsigned long encrypted = encryptTimestamp(timestamp, keys.private, keys.modulus);
     unsigned long decrypted = decryptTimestamp(encrypted, keys.public, keys.modulus);
