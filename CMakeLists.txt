@@ -41,3 +41,8 @@ add_executable(tfa_server
     src/tfa-server/tfa_server.c
     ${COMMON_SRC}
 )
+
+add_executable(rsa_test
+    src/rsa-test/rsa_test.c
+    ${COMMON_SRC}
+)
