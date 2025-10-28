@@ -13,7 +13,7 @@
 
 int getMainOption();
 
-unsigned int getIntInput(char *inputName);
+unsigned int getLongInput(char *inputName);
 
 int registerPublicKey(unsigned int userID, unsigned int publicKey, char *serverIP, unsigned short serverPort);
 
@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
         servPort = 7;
 
     printf("Welcome to the Lodi Client!\n");
-    unsigned int userID = getIntInput("user ID");
+    unsigned int userID = getLongInput("user ID");
     printf("Now choose from the following options:\n");
 
     int selected = 0;
@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
         unsigned int publicKey;
         switch (selected) {
             case REGISTER_OPTION:
-                publicKey = getIntInput("public key");
+                publicKey = getLongInput("public key");
                 registerPublicKey(userID, publicKey, servIP, servPort);
                 break;
             case LOGIN_OPTION:
@@ -76,7 +76,7 @@ int getMainOption() {
     return selected;
 }
 
-unsigned int getIntInput(char *inputName) {
+unsigned int getLongInput(char *inputName) {
     int input = -1;
     while (input < 0) {
         printf("Please enter your %s:\n", inputName);

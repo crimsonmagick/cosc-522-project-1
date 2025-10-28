@@ -18,15 +18,9 @@
 #define LOGIN_OPTION 2
 #define QUIT_OPTION 3
 
-typedef struct {
-    unsigned long private;
-    unsigned long public;
-    unsigned long modulus;
-} KeyGenResult;
-
 int getMainOption();
 
-unsigned int getIntInput(char *inputName);
+unsigned long getLongInput(char *inputName);
 
 int registerPublicKey(unsigned int userID, unsigned int publicKey);
 
@@ -35,7 +29,7 @@ int lodiLogin(unsigned int userID, long timestamp, long digitalSignature);
 
 int main() {
     printf("Welcome to the Lodi Client!\n");
-    unsigned int userID = getIntInput("user ID");
+    unsigned int userID = getLongInput("user ID");
     printf("Now choose from the following options:\n");
 
     int selected = 0;
@@ -44,17 +38,17 @@ int main() {
 
         unsigned int publicKey;
         unsigned int privateKey;
-        long timestamp;
-        long digitalSignature;
+        unsigned long timestamp;
+        unsigned long digitalSignature;
         switch (selected) {
             case REGISTER_OPTION:
                 // TODO look into generating public/private key pair either here or as another option
-                publicKey = getIntInput("public key");
+                publicKey = getLongInput("public key");
                 registerPublicKey(userID, publicKey);
                 break;
             case LOGIN_OPTION:
                 // TODO look into reusing generated private key
-                privateKey = getIntInput("private key");
+                privateKey = getLongInput("private key");
                 time(&timestamp);
                 digitalSignature = encryptTimestamp(timestamp, privateKey, MODULUS);
                 lodiLogin(userID, timestamp, digitalSignature);
@@ -98,14 +92,14 @@ int getLodiLoopOption() {
     return selected;
 }
 
-unsigned int getIntInput(char *inputName) {
-    int input = -1;
+unsigned long getLongInput(char *inputName) {
+    long input = -1;
     while (input < 0) {
         printf("Please enter your %s:\n", inputName);
         char line[64];
 
         if (fgets(line, sizeof(line), stdin)) {
-            sscanf(line, "%d", &input);
+            sscanf(line, "%ld", &input);
             if (sscanf(line, "%d", &input) != 1 || input < 0) {
                 printf("Invalid %s entered. Please try again!\n", inputName);
             }
@@ -114,7 +108,7 @@ unsigned int getIntInput(char *inputName) {
         }
     }
 
-    return (unsigned int) input;
+    return (unsigned long) input;
 }
 
 int registerPublicKey(const unsigned int userID, const unsigned int publicKey) {
