@@ -25,6 +25,8 @@ int registerTFAClient(const unsigned int userID, unsigned long timestamp, unsign
 
 int lodiLogin(unsigned int userID, long timestamp, long digitalSignature);
 
+int handleTFAPush();
+
 
 int main() {
     printf("Welcome to the TFA Client!\n");
@@ -37,6 +39,10 @@ int main() {
     digitalSignature = encryptTimestamp(timestamp, privateKey, MODULUS);
 
     registerTFAClient(userID, timestamp, digitalSignature);
+
+    while (true) {
+        handleTFAPush();
+    }
 
     exit(0);
 }
@@ -60,12 +66,58 @@ unsigned long getLongInput(char *inputName) {
     return (unsigned long) input;
 }
 
+int handleTFAPush() {
+    const unsigned short serverPort = atoi(getServerConfig(TFA_CLIENT).port);
+
+    const int serverSocket = getServerSocket(serverPort, NULL);
+
+    if (serverSocket < 0) {
+        printf("Unable to create socket\n");
+        exit(EXIT_FAILURE);
+    }
+
+    while (true) {
+        struct sockaddr_in clientAddress;
+
+        char receivedBuffer[TFA_SERVER_RESPONSE_SIZE];
+        const int receivedSuccess = receiveMessage(serverSocket, receivedBuffer, TFA_SERVER_RESPONSE_SIZE, &clientAddress);
+
+        if (receivedSuccess == ERROR) {
+            printf("Failed to handle incoming TFAClientOrLodiServerToTFAServer message.\n");
+            continue;
+        }
+
+        TFAServerToTFAClient *receivedMessage = deserializeTFAServerResponse(receivedBuffer, TFA_SERVER_RESPONSE_SIZE);
+
+        // TODO connect to PKE and get publicKey, validate publicKey,
+        // TODO connect to TFA server and get two factor auth confirmation
+
+        TFAClientOrLodiServerToTFAServer toSendMessage = {
+            .messageType = ackPushTFA,
+            .userID = receivedMessage->userID,
+            .timestamp = 0,
+            .digitalSig = 0
+          };
+
+        char* sendBuffer = serializeTFAClientRequest(&toSendMessage);
+
+        const int sendSuccess = sendMessage(serverSocket, sendBuffer, TFA_CLIENT_REQUEST_SIZE, &clientAddress);
+        if (sendSuccess == ERROR) {
+            printf("Error while sending message.\n");
+        }
+
+        free(sendBuffer);
+        free(receivedMessage);
+    }
+}
+
 int registerTFAClient(const unsigned int userID, unsigned long timestamp, unsigned long digitalSignature) {
     const ServerConfig config = getServerConfig(TFA);
     const TFAClientOrLodiServerToTFAServer requestMessage = {
-        userID,
-        timestamp,
-        digitalSignature
+        .messageType = registerTFA,
+        .userID = userID,
+        .timestamp = timestamp,
+        .digitalSig = digitalSignature
     };
 
     char *requestBuffer = serializeTFAClientRequest(&requestMessage);

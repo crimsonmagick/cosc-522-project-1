@@ -7,19 +7,22 @@
 static char *SERVER_ADDRESS_KEYS[] = {
   "PUBLIC_KEY_ADDRESS",
   "LODI_ADDRESS",
-  "TFA_ADDRESS"
+  "TFA_ADDRESS",
+  "TFA_CLIENT_ADDRESS"
 };
 
 static char *SERVER_PORT_KEYS[] = {
   "PUBLIC_KEY_PORT",
   "LODI_PORT",
-  "TFA_PORT"
+  "TFA_PORT",
+  "TFA_CLIENT_PORT"
 };
 
 static char *SERVER_DEFAULT_PORTS[] = {
   "9091",
   "9092",
-  "9093"
+  "9093",
+  "9094"
 };
 
 ServerConfig getServerConfig(const enum Server server) {

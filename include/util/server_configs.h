@@ -4,7 +4,8 @@
 enum Server {
   PK,
   LODI,
-  TFA
+  TFA,
+  TFA_CLIENT
 };
 
 typedef struct {
