@@ -5,11 +5,11 @@
 #include <string.h>     /* for memset() */
 #include <unistd.h>     /* for close() */
 #include <time.h>
-#include <math.h>
 #include <stdbool.h>
 
 #include "messaging/tfa_messaging.h"
 #include "messaging/udp.h"
+#include "shared.h"
 #include "util/rsa.h"
 #include "util/server_configs.h"
 

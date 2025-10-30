@@ -11,6 +11,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 add_executable(echo_client
     src/echo-example/udp_echo_client.c
     ${COMMON_SRC}
+    include/util/shared.h
 )
 
 add_executable(echo_server

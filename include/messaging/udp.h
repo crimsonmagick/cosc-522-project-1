@@ -1,9 +1,6 @@
 #ifndef COSC522_LODI_MESSAGING_H
 #define COSC522_LODI_MESSAGING_H
 
-#define SUCCESS 0
-#define ERROR 1
-
 int getServerSocket(const unsigned short serverPort, const char *address);
 
 int closeSocket(const int socket);

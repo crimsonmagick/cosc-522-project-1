@@ -6,6 +6,7 @@
 #include "messaging/pke_messaging.h"
 #include "messaging/udp.h"
 #include "key_repository.h"
+#include "shared.h"
 #include "util/server_configs.h"
 
 
@@ -32,16 +33,25 @@ int main() {
     }
 
     PClientToPKServer *receivedMessage = deserializePKClientRequest(receivedBuffer, PK_CLIENT_REQUEST_SIZE);
-
-    addKey(receivedMessage->userID, receivedMessage->publicKey);
-
-    PKServerToPClientOrLodiServer toSendMessage = {
-      ackRegisterKey,
+    PKServerToPClientOrLodiServer responseMessage = {
       receivedMessage->userID,
       receivedMessage->publicKey
     };
 
-    char *sendBuffer = serializePKServerResponse(&toSendMessage);
+    if (receivedMessage->messageType == registerKey) {
+      addKey(receivedMessage->userID, receivedMessage->publicKey);
+      responseMessage.messageType = ackRegisterKey;
+    } else if (receivedMessage->messageType == requestKey) {
+      unsigned int publicKey;
+      if (getKey(receivedMessage->userID, &publicKey) == ERROR) {
+        printf("publicKey=%u not found.\n", receivedMessage->publicKey);
+      }
+      responseMessage.messageType = responsePublicKey;
+    } else {
+      printf("Received message with unknown message type.\n");
+    }
+
+    char *sendBuffer = serializePKServerResponse(&responseMessage);
 
     const int sendSuccess = sendMessage(serverSocket, sendBuffer, PK_SERVER_RESPONSE_SIZE, &clientAddress);
     if (sendSuccess == ERROR) {

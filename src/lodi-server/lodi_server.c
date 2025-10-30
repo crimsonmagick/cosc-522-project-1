@@ -5,6 +5,7 @@
 
 #include "messaging/lodi_messaging.h"
 #include "messaging/udp.h"
+#include "shared.h"
 #include "util/server_configs.h"
 
 int main() {

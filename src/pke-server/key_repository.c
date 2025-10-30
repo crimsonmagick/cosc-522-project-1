@@ -1,7 +1,9 @@
-#include <stdio.h>
 #include <string.h>
 
-#define SIZE 50
+#include "key_repository.h"
+#include "shared.h"
+
+#define SIZE 500
 
 unsigned int keyStore[SIZE];
 
@@ -12,7 +14,7 @@ void init() {
 int addKey(unsigned int userId, unsigned int publicKey) {
   const unsigned int idx = userId % SIZE;
   keyStore[idx] = publicKey;
-  return 0;
+  return SUCCESS;
 }
 
 int getKey(unsigned int userId, unsigned int *publicKey) {
@@ -20,8 +22,8 @@ int getKey(unsigned int userId, unsigned int *publicKey) {
   const unsigned int retrieved = keyStore[idx];
   if (retrieved == 0) {
     // key not found
-    return 1;
+    return ERROR;
   }
   *publicKey = retrieved;
-  return 0;
+  return SUCCESS;
 }

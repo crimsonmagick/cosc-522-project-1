@@ -1,16 +1,12 @@
 #include <stdio.h>      /* for printf() and fprintf() */
-#include <sys/socket.h> /* for socket(), connect(), sendto(), and recvfrom() */
 #include <arpa/inet.h>  /* for sockaddr_in and inet_addr() */
 #include <stdlib.h>     /* for atoi() and exit() */
-#include <string.h>     /* for memset() */
-#include <unistd.h>     /* for close() */
 #include <time.h>
-#include <math.h>
-#include <stdbool.h>
 
 #include "messaging/pke_messaging.h"
 #include "messaging/lodi_messaging.h"
 #include "messaging/udp.h"
+#include "shared.h"
 #include "util/rsa.h"
 #include "util/server_configs.h"
 

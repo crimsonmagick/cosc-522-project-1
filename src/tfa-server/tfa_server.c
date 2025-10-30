@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+#include "shared.h"
 #include "messaging/tfa_messaging.h"
 #include "messaging/udp.h"
 #include "util/server_configs.h"

@@ -4,6 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "shared.h"
 #include "logging/logging.h"
 #include "messaging/udp.h"
 
