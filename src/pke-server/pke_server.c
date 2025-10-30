@@ -5,11 +5,14 @@
 
 #include "messaging/pke_messaging.h"
 #include "messaging/udp.h"
+#include "key_repository.h"
 #include "util/server_configs.h"
 
-int main() {
 
+int main() {
   const unsigned short serverPort = atoi(getServerConfig(PK).port);
+
+  init();
 
   const int serverSocket = getServerSocket(serverPort, NULL);
   if (serverSocket < 0) {
@@ -30,13 +33,15 @@ int main() {
 
     PClientToPKServer *receivedMessage = deserializePKClientRequest(receivedBuffer, PK_CLIENT_REQUEST_SIZE);
 
+    addKey(receivedMessage->userID, receivedMessage->publicKey);
+
     PKServerToPClientOrLodiServer toSendMessage = {
       ackRegisterKey,
       receivedMessage->userID,
       receivedMessage->publicKey
     };
 
-    char* sendBuffer = serializePKServerResponse(&toSendMessage);
+    char *sendBuffer = serializePKServerResponse(&toSendMessage);
 
     const int sendSuccess = sendMessage(serverSocket, sendBuffer, PK_SERVER_RESPONSE_SIZE, &clientAddress);
     if (sendSuccess == ERROR) {

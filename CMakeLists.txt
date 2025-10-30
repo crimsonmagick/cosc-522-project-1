@@ -31,6 +31,8 @@ add_executable(lodi_server
 add_executable(pke_server
     src/pke-server/pke_server.c
     ${COMMON_SRC}
+    src/pke-server/key_repository.c
+    src/pke-server/key_repository.h
 )
 add_executable(tfa_client
     src/tfa-client/tfa_client.c
