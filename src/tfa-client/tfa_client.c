@@ -89,9 +89,6 @@ int handleTFAPush() {
 
         TFAServerToTFAClient *receivedMessage = deserializeTFAServerResponse(receivedBuffer, TFA_SERVER_RESPONSE_SIZE);
 
-        // TODO connect to PKE and get publicKey, validate publicKey,
-        // TODO connect to TFA server and get two factor auth confirmation
-
         TFAClientOrLodiServerToTFAServer toSendMessage = {
             .messageType = ackPushTFA,
             .userID = receivedMessage->userID,

@@ -11,7 +11,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 add_executable(echo_client
     src/echo-example/udp_echo_client.c
     ${COMMON_SRC}
-    include/util/shared.h
+    include/shared.h
 )
 
 add_executable(echo_server
@@ -43,6 +43,8 @@ add_executable(tfa_client
 add_executable(tfa_server
     src/tfa-server/tfa_server.c
     ${COMMON_SRC}
+    src/tfa-server/registration_repository.c
+    src/tfa-server/registration_repository.h
 )
 
 add_executable(rsa_test
