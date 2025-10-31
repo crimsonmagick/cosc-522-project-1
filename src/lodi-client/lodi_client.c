@@ -32,10 +32,11 @@ int main() {
     while (selected != QUIT_OPTION) {
         selected = getMainOption();
 
-        unsigned int publicKey;
-        unsigned int privateKey;
+        unsigned long publicKey;
+        unsigned long privateKey;
         unsigned long timestamp;
         unsigned long digitalSignature;
+        unsigned long decrypted = 0;
         switch (selected) {
             case REGISTER_OPTION:
                 // TODO look into generating public/private key pair either here or as another option
@@ -47,6 +48,7 @@ int main() {
                 privateKey = getLongInput("private key");
                 time(&timestamp);
                 digitalSignature = encryptTimestamp(timestamp, privateKey, MODULUS);
+                decrypted = decryptTimestamp(digitalSignature, publicKey, MODULUS);
                 lodiLogin(userID, timestamp, digitalSignature);
                 break;
             case QUIT_OPTION:

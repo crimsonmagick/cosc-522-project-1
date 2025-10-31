@@ -34,17 +34,19 @@ int main() {
 
     PClientToPKServer *receivedMessage = deserializePKClientRequest(receivedBuffer, PK_CLIENT_REQUEST_SIZE);
     PKServerToPClientOrLodiServer responseMessage = {
-      receivedMessage->userID,
-      receivedMessage->publicKey
+      .userID = receivedMessage->userID,
     };
 
     if (receivedMessage->messageType == registerKey) {
       addKey(receivedMessage->userID, receivedMessage->publicKey);
       responseMessage.messageType = ackRegisterKey;
+      responseMessage.publicKey = receivedMessage->publicKey;
     } else if (receivedMessage->messageType == requestKey) {
       unsigned int publicKey;
       if (getKey(receivedMessage->userID, &publicKey) == ERROR) {
         printf("publicKey=%u not found.\n", receivedMessage->publicKey);
+      } else {
+        responseMessage.publicKey = publicKey;
       }
       responseMessage.messageType = responsePublicKey;
     } else {

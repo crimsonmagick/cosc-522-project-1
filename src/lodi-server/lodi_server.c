@@ -6,7 +6,36 @@
 #include "messaging/lodi_messaging.h"
 #include "messaging/udp.h"
 #include "shared.h"
+#include "messaging/pke_messaging.h"
+#include "util/rsa.h"
 #include "util/server_configs.h"
+
+int getPublicKey(const unsigned int userID, unsigned int *publicKey) {
+  const ServerConfig config = getServerConfig(PK);
+  const PClientToPKServer requestMessage = {
+    .messageType = requestKey,
+    .userID = userID
+  };
+
+  char *requestBuffer = serializePKClientRequest(&requestMessage);
+  char responseBuffer[PK_SERVER_RESPONSE_SIZE];
+  const int sendStatus = synchronousSend(requestBuffer, PK_CLIENT_REQUEST_SIZE, responseBuffer,
+                                         PK_SERVER_RESPONSE_SIZE, config.address, atoi(config.port));
+  free(requestBuffer);
+
+  if (sendStatus == ERROR) {
+    printf("Aborting registration...\n");
+  } else {
+    PKServerToLodiClient *responseDeserialized = deserializePKServerResponse(
+      responseBuffer, PK_SERVER_RESPONSE_SIZE);
+    *publicKey = responseDeserialized->publicKey;
+    printf("Key retrieval successful! Received: messageType=%u, userID=%u, publicKey=%u\n",
+           responseDeserialized->messageType, responseDeserialized->userID, *publicKey);
+    free(responseDeserialized);
+  }
+
+  return sendStatus;
+}
 
 int main() {
   const unsigned short serverPort = atoi(getServerConfig(LODI).port);
@@ -30,15 +59,32 @@ int main() {
 
     PClientToLodiServer *receivedMessage = deserializeLodiServerRequest(receivedBuffer, LODI_CLIENT_REQUEST_SIZE);
 
-    // TODO connect to PKE and get publicKey, validate publicKey,
+    unsigned int publicKey;
+    bool authenticated = false;
+    if (getPublicKey(receivedMessage->userID, &publicKey) == ERROR) {
+      printf("Failed to retrieve public key!\n");
+    } else {
+      const unsigned long decrypted = decryptTimestamp(receivedMessage->digitalSig, publicKey, MODULUS);
+      if (decrypted == receivedMessage->timestamp) {
+        authenticated = true;
+        printf("Decrypted timestamp successfully! timestamp=%lu \n", decrypted);
+      } else {
+        printf("Failed to decrypt timestamp! timestamp=%lu, decrypted=%lu \n",
+               receivedMessage->timestamp, decrypted);
+      }
+    }
+
+    if (authenticated) {
+      printf("Verifying login with TFA...\n");
     // TODO connect to TFA server and get two factor auth confirmation
+    }
 
     LodiServerToLodiClientAcks toSendMessage = {
       ackLogin,
       receivedMessage->userID,
     };
 
-    char* sendBuffer = serializeLodiServerResponse(&toSendMessage);
+    char *sendBuffer = serializeLodiServerResponse(&toSendMessage);
 
     const int sendSuccess = sendMessage(serverSocket, sendBuffer, LODI_SERVER_RESPONSE_SIZE, &clientAddress);
     if (sendSuccess == ERROR) {
@@ -48,5 +94,4 @@ int main() {
     free(sendBuffer);
     free(receivedMessage);
   }
-
 }

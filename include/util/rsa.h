@@ -3,7 +3,7 @@
 // TODO remove hard-coding p and q - generate these when necessary
 #define P 1000117
 #define Q 1000151
-#define MODULUS ((long) P * (long) Q)
+#define MODULUS ((unsigned long) P * (unsigned long) Q)
 
 typedef struct {
   unsigned long private;
