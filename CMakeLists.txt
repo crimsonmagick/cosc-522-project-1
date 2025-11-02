@@ -9,13 +9,27 @@ file(GLOB COMMON_SRC CONFIGURE_DEPENDS src/shared/**/*.c)
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
 add_executable(echo_client
-    src/echo-example/udp_echo_client.c
+    src/echo-example-udp/udp_echo_client.c
     ${COMMON_SRC}
     include/shared.h
 )
 
 add_executable(echo_server
-    src/echo-example/udp_echo_server.c
+    src/echo-example-udp/udp_echo_server.c
+    ${COMMON_SRC}
+)
+
+add_executable(echo_client_tcp
+    src/echo-example-tcp/tcp_echo_client.c
+    src/echo-example-tcp/die_with_error.c
+    ${COMMON_SRC}
+    include/shared.h
+)
+
+add_executable(echo_server_tcp
+    src/echo-example-tcp/handle_tcp_client.c
+    src/echo-example-tcp/tcp_echo_server.c
+    src/echo-example-tcp/die_with_error.c
     ${COMMON_SRC}
 )
 
