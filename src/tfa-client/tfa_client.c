@@ -110,6 +110,7 @@ int handleTFAPush() {
 
 int registerTFAClient(const unsigned int userID, unsigned long timestamp, unsigned long digitalSignature) {
     const ServerConfig config = getServerConfig(TFA);
+    const ServerConfig clientConfig = getServerConfig(TFA_CLIENT);
     const TFAClientOrLodiServerToTFAServer requestMessage = {
         .messageType = registerTFA,
         .userID = userID,
@@ -119,8 +120,8 @@ int registerTFAClient(const unsigned int userID, unsigned long timestamp, unsign
 
     char *requestBuffer = serializeTFAClientRequest(&requestMessage);
     char responseBuffer[TFA_SERVER_RESPONSE_SIZE];
-    const int sendStatus = synchronousSend(requestBuffer, TFA_CLIENT_REQUEST_SIZE, responseBuffer,
-                                           TFA_SERVER_RESPONSE_SIZE, config.address, atoi(config.port));
+    const int sendStatus = synchronousSendWithClientPort(requestBuffer, TFA_CLIENT_REQUEST_SIZE, responseBuffer,
+                                           TFA_SERVER_RESPONSE_SIZE, config.address, atoi(config.port), atoi(clientConfig.port));
     free(requestBuffer);
 
     if (sendStatus == ERROR) {

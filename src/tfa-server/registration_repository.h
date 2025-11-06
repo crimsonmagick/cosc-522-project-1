@@ -5,8 +5,8 @@
 
 void init();
 
-int addIP(unsigned int userId, struct in_addr clientAddress);
+int addIP(unsigned int userId, struct in_addr clientAddress, unsigned short clientPort);
 
-int getIP(unsigned int userId, struct in_addr *clientAddress);
+int getIP(unsigned int userId, struct in_addr *clientAddress, unsigned short *clientPort);
 
 #endif

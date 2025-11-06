@@ -6,24 +6,31 @@
 
 #define SIZE 500
 
-struct in_addr *keyStore[SIZE];
+struct in_addr *addressStore[SIZE];
+
+unsigned short portStore[SIZE];
 
 void init() {
-  memset(keyStore, 0, SIZE * sizeof(struct in_addr));
+  memset(addressStore, 0, SIZE * sizeof(struct in_addr));
+  memset(portStore, 0, SIZE * sizeof(unsigned short));
 }
 
-int addIP(unsigned int userId, struct in_addr clientAddress) {
+int addIP(unsigned int userId, struct in_addr clientAddress, unsigned short clientPort) {
   const unsigned int idx = userId % SIZE;
-  memcpy(&keyStore[idx], &clientAddress, sizeof(struct in_addr));
+  portStore[idx] = clientPort;
+  memcpy(&addressStore[idx], &clientAddress, sizeof(struct in_addr));
   return SUCCESS;
 }
 
-int getIP(unsigned int userId, struct in_addr *clientAddress) {
+int getIP(unsigned int userId, struct in_addr *clientAddress, unsigned short *clientPort) {
   const unsigned int idx = userId % SIZE;
-  if (keyStore[idx] == 0) {
+  if (addressStore[idx] == 0 || portStore[idx] == 0) {
     // key not found
     return ERROR;
   }
-  memcpy(clientAddress, &keyStore[idx], sizeof(struct in_addr));
+
+  *clientPort = portStore[idx];
+
+  memcpy(clientAddress, &addressStore[idx], sizeof(struct in_addr));
   return SUCCESS;
 }

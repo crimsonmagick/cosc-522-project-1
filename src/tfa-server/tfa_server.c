@@ -40,9 +40,10 @@ int main() {
             receivedMessage->userID,
         };
 
-        addIP(receivedMessage->userID, clientAddress.sin_addr);
+        addIP(receivedMessage->userID, clientAddress.sin_addr, ntohs(clientAddress.sin_port));
         struct in_addr testRetrieve;
-        getIP(receivedMessage->userID, &testRetrieve);
+        unsigned short testPort;
+        getIP(receivedMessage->userID, &testRetrieve, &testPort);
 
         char *sendBuffer = serializeTFAServerResponse(&toSendMessage);
 

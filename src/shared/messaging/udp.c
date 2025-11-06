@@ -82,7 +82,7 @@ int receiveMessage(const int socket, char *message, const size_t messageSize, st
 int sendMessage(const int socket, const char *messageBuffer, const size_t messageSize,
                 const struct sockaddr_in *destinationAddress) {
   const ssize_t numBytes = sendto(socket, messageBuffer, messageSize, 0, (struct sockaddr *) destinationAddress,
-                                  sizeof(*destinationAddress));
+                                sizeof(*destinationAddress));
 
   if (numBytes < 0) {
     logError("sendTo() failed");
@@ -105,10 +105,28 @@ int errorClose(const char *errorMessage, const int socket) {
 
 int synchronousSend(const char *bufferIn, const size_t bufferInSize, char *bufferOut, const size_t bufferOutSize,
                     const char *serverIP, const unsigned short serverPort) {
+  return synchronousSendWithClientPort(bufferIn, bufferInSize, bufferOut, bufferOutSize, serverIP, serverPort, 0);
+}
+
+int synchronousSendWithClientPort(const char *bufferIn, size_t bufferInSize, char *bufferOut, size_t bufferOutSize, const char *serverIP,
+    unsigned short serverPort, unsigned short clientPort) {
   struct timeval timeout = {.tv_sec = TIMEOUT_SECONDS, .tv_usec = 0};
   const int clientSocket = getClientSocket(&timeout);
+
   if (clientSocket < 0) {
     return errorClose("Error: Unable to open socket.\n", clientSocket);
+  }
+
+  if (clientPort != 0) {
+    struct sockaddr_in clientAddr;
+    memset(&clientAddr, 0, sizeof(clientAddr));
+    clientAddr.sin_family = AF_INET;
+    clientAddr.sin_port = ntohs(clientPort);
+    clientAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    if (bind(clientSocket, (const struct sockaddr*) &clientAddr, sizeof(clientAddr)) < 0) {
+      printf("Error: Failed to bind client port.\n");
+      return ERROR;
+    };
   }
   const struct sockaddr_in serverAddress = getNetworkAddress(serverIP, serverPort);
   const int sendStatus = sendMessage(clientSocket, bufferIn, bufferInSize, &serverAddress);

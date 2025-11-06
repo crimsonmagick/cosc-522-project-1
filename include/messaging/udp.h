@@ -17,4 +17,8 @@ int sendMessage(const int socket, const char *messageBuffer, const size_t messag
 
 int synchronousSend(const char *bufferIn, size_t bufferInSize, char *bufferOut, size_t bufferOutSize, const char *serverIP,
     unsigned short serverPort);
+
+int synchronousSendWithClientPort(const char *bufferIn, size_t bufferInSize, char *bufferOut, size_t bufferOutSize, const char *serverIP,
+    unsigned short serverPort, unsigned short clientPort);
+
 #endif //COSC522_LODI_MESSAGING_H
