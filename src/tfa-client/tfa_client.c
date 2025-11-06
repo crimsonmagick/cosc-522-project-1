@@ -111,7 +111,7 @@ int handleTFAPush() {
 int registerTFAClient(const unsigned int userID, unsigned long timestamp, unsigned long digitalSignature) {
     const ServerConfig config = getServerConfig(TFA);
     const ServerConfig clientConfig = getServerConfig(TFA_CLIENT);
-    const TFAClientOrLodiServerToTFAServer requestMessage = {
+    TFAClientOrLodiServerToTFAServer requestMessage = {
         .messageType = registerTFA,
         .userID = userID,
         .timestamp = timestamp,
@@ -120,7 +120,7 @@ int registerTFAClient(const unsigned int userID, unsigned long timestamp, unsign
 
     char *requestBuffer = serializeTFAClientRequest(&requestMessage);
     char responseBuffer[TFA_SERVER_RESPONSE_SIZE];
-    const int sendStatus = synchronousSendWithClientPort(requestBuffer, TFA_CLIENT_REQUEST_SIZE, responseBuffer,
+    int sendStatus = synchronousSendWithClientPort(requestBuffer, TFA_CLIENT_REQUEST_SIZE, responseBuffer,
                                            TFA_SERVER_RESPONSE_SIZE, config.address, atoi(config.port), atoi(clientConfig.port));
     free(requestBuffer);
 
@@ -129,10 +129,21 @@ int registerTFAClient(const unsigned int userID, unsigned long timestamp, unsign
     } else {
         TFAServerToTFAClient *responseDeserialized = deserializeTFAServerResponse(
             responseBuffer, TFA_SERVER_RESPONSE_SIZE);
-        printf("TFA registration successful! Received: messageType=%u, userID=%u",
+        printf("TFA authentication successful! Received: messageType=%u, userID=%u\n",
                responseDeserialized->messageType, responseDeserialized->userID);
         free(responseDeserialized);
     }
+
+    requestMessage.messageType = ackRegTFA;
+    requestBuffer = serializeTFAClientRequest(&requestMessage);
+    sendStatus = synchronousSendWithClientPort(requestBuffer, TFA_CLIENT_REQUEST_SIZE, responseBuffer,
+                                           TFA_SERVER_RESPONSE_SIZE, config.address, atoi(config.port), atoi(clientConfig.port));
+    if (sendStatus == ERROR) {
+        printf("Key registration failed in final step...\n");
+    } else {
+        printf("Key registration successful!\n");
+    }
+    free(requestBuffer);
 
     return sendStatus;
 }

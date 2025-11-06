@@ -28,7 +28,7 @@ int main() {
         struct sockaddr_in clientAddress;
 
         char receivedBuffer[TFA_CLIENT_REQUEST_SIZE];
-        const int receivedSuccess = receiveMessage(serverSocket, receivedBuffer, TFA_CLIENT_REQUEST_SIZE,
+        int receivedSuccess = receiveMessage(serverSocket, receivedBuffer, TFA_CLIENT_REQUEST_SIZE,
                                                    &clientAddress);
 
         if (receivedSuccess == ERROR) {
@@ -73,10 +73,6 @@ int main() {
         }
         printf("Authentication succeeded! Continuing with TFA client registration!\n");
 
-        // REGISTER CLIENT
-        addIP(receivedMessage->userID, clientAddress.sin_addr, ntohs(clientAddress.sin_port));
-        printf("Registered client! Sending TFA confirmation message!\n");
-
         // WE AUTHENTICATED! SEND SUCCESS MESSAGE TO CLIENT
         TFAServerToTFAClient registrationSuccessMessage = {
             confirmTFA,
@@ -84,12 +80,46 @@ int main() {
         };
         char *sendBuffer = serializeTFAServerResponse(&registrationSuccessMessage);
 
-        const int sendSuccess = sendMessage(serverSocket, sendBuffer, TFA_SERVER_RESPONSE_SIZE, &clientAddress);
-        if (sendSuccess == ERROR) {
-            printf("Error while sending message.\n");
-        }
+        int sendSuccess = sendMessage(serverSocket, sendBuffer, TFA_SERVER_RESPONSE_SIZE, &clientAddress);
 
         free(sendBuffer);
         free(receivedMessage);
+
+        if (sendSuccess == ERROR) {
+            printf("Error while sending message.\n");
+            continue;
+        }
+
+        // RECEIVE ACK MESSAGE OF DESTINY
+        receivedSuccess = receiveMessage(serverSocket, receivedBuffer, TFA_CLIENT_REQUEST_SIZE,
+                                                   &clientAddress);
+
+        if (receivedSuccess == ERROR) {
+            printf("Failed to handle incoming ACK TFAClientOrLodiServerToTFAServer message.\n");
+            continue;
+        }
+
+        receivedMessage = deserializeTFAClientRequest(receivedBuffer, TFA_CLIENT_REQUEST_SIZE);
+        if (receivedMessage->messageType != ackRegTFA) {
+            printf("Did not receive expected ack register message, aborting registration...\n");
+            free(receivedMessage);
+            continue;
+        }
+        printf("Received expected ack register message! Finishing registration.\n");
+
+        // REGISTER CLIENT
+        addIP(receivedMessage->userID, clientAddress.sin_addr, ntohs(clientAddress.sin_port));
+        printf("Registered client! Sending TFA confirmation message!\n");
+
+        sendBuffer = serializeTFAServerResponse(&registrationSuccessMessage);
+
+        sendSuccess = sendMessage(serverSocket, sendBuffer, TFA_SERVER_RESPONSE_SIZE, &clientAddress);
+
+        free(sendBuffer);
+        free(receivedMessage);
+
+        if (sendSuccess == ERROR) {
+            printf("Error while sending final ack message for client registration.\n");
+        }
     }
 }
