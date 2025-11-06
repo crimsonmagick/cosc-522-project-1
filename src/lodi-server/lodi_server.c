@@ -7,6 +7,7 @@
 #include "messaging/udp.h"
 #include "shared.h"
 #include "messaging/pke_messaging.h"
+#include "messaging/tfa_messaging.h"
 #include "util/rsa.h"
 #include "util/server_configs.h"
 
@@ -31,6 +32,32 @@ int getPublicKey(const unsigned int userID, unsigned int *publicKey) {
     *publicKey = responseDeserialized->publicKey;
     printf("Key retrieval successful! Received: messageType=%u, userID=%u, publicKey=%u\n",
            responseDeserialized->messageType, responseDeserialized->userID, *publicKey);
+    free(responseDeserialized);
+  }
+
+  return sendStatus;
+}
+
+int sendPushRequest(const unsigned int userID) {
+  const ServerConfig config = getServerConfig(TFA);
+  const TFAClientOrLodiServerToTFAServer requestMessage = {
+    .messageType = requestAuth,
+    .userID = userID
+  };
+
+  char *requestBuffer = serializeTFAClientRequest(&requestMessage);
+  char responseBuffer[TFA_CLIENT_REQUEST_SIZE];
+  const int sendStatus = synchronousSend(requestBuffer, TFA_CLIENT_REQUEST_SIZE, responseBuffer,
+                                         TFA_SERVER_RESPONSE_SIZE, config.address, atoi(config.port));
+  free(requestBuffer);
+
+  if (sendStatus == ERROR) {
+    printf("Aborting push authentication...\n");
+  } else {
+    TFAServerToLodiServer *responseDeserialized = deserializeTFAServerLodiResponse(responseBuffer,
+      TFA_SERVER_RESPONSE_SIZE);
+    printf("Push auth successful! Received: messageType=%u, userID=%u", responseDeserialized->messageType,
+           responseDeserialized->userID);
     free(responseDeserialized);
   }
 
@@ -76,7 +103,13 @@ int main() {
 
     if (authenticated) {
       printf("Verifying login with TFA...\n");
-    // TODO connect to TFA server and get two factor auth confirmation
+      if (sendPushRequest(receivedMessage->userID) == ERROR) {
+        printf("Failed to authenticate with push confirmation! Continuing without response...\n");
+        continue;
+      }
+    } else {
+      printf("Failed to authenticate with public key! Continuing without response...\n");
+      continue;
     }
 
     LodiServerToLodiClientAcks toSendMessage = {

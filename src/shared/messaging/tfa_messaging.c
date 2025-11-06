@@ -6,6 +6,37 @@
 #include "messaging/tfa_messaging.h"
 #include "util/buffers.h"
 
+char *serializeTFAServerLodiResponse(const TFAServerToLodiServer *toSerialize) {
+  char *serialized = malloc(TFA_SERVER_RESPONSE_SIZE);
+  if (!serialized) {
+    return NULL;
+  }
+
+  size_t offset = 0;
+  appendUint32(serialized, &offset, toSerialize->messageType);
+  appendUint32(serialized, &offset, toSerialize->userID);
+
+  return serialized;
+}
+
+TFAServerToLodiServer *deserializeTFAServerLodiResponse(const char *serialized, const size_t size) {
+  // validate buffer/serialized size
+  if (size < TFA_SERVER_RESPONSE_SIZE) {
+    return NULL;
+  }
+
+  TFAServerToLodiServer *deserialized = malloc(sizeof(*deserialized));
+  if (!deserialized) {
+    return NULL;
+  }
+
+  size_t offset = 0;
+  deserialized->messageType = getUint32(serialized, &offset);
+  deserialized->userID = getUint32(serialized, &offset);
+
+  return deserialized;
+}
+
 char *serializeTFAClientRequest(const TFAClientOrLodiServerToTFAServer *toSerialize) {
   char *serialized = malloc(TFA_CLIENT_REQUEST_SIZE);
   if (!serialized) {

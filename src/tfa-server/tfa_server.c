@@ -122,6 +122,18 @@ int main() {
             if (sendSuccess == ERROR) {
                 printf("Error while sending final ack message for client registration.\n");
             }
+        } else if (receivedMessage->messageType == requestAuth) {
+            TFAServerToLodiServer pushNotificationResponse = {
+                responseAuth,
+                receivedMessage->userID
+            };
+            char * sendBuffer = serializeTFAServerLodiResponse(&pushNotificationResponse);
+            int sendSuccess = sendMessage(serverSocket, sendBuffer, TFA_SERVER_RESPONSE_SIZE, &clientAddress);
+            if (sendSuccess == ERROR) {
+                printf("Error while sending push response to Lodi server\n");
+            }
+
+            free(sendBuffer);
         }
 
         free(receivedMessage);
