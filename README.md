@@ -1,5 +1,6 @@
-# cosc-522-project-1
-Project #1: Implementing Two-Factor Authentication using UDP Sockets for our project
+# COSC 522 Project #1: Implementing Two-Factor Authentication using UDP Sockets
+
+Authors: **Ardeshir (Ari) Hassani and Welby Seely**
 
 ## Building project
 First, either clone or unzip the project in the parent directory of your choice:
@@ -113,13 +114,22 @@ Use the up and down arrows to select another session, and press enter to select 
 5. TFA Server
     * `./tfa_server`
 
+As per specs, only the clients can be interacted with directly. The server sessions will only have reactive output.
+
 ### Generating a public/private key pair
 Optionally use the `rsa_generate` program to generate the private/public key pair:
 
 ```
+./rsa_generate
+publicKey=17, privateKey=470713419953, modulus=1000268017667
+timestamp=1762552703, encrypted=919744651290, decrypted=1762552703
+Encryption/decryption success!
 ```
 
-As per specs, only the clients can be interacted with directly. The server sessions will only have reactive output.
+Currently, the generation is hardcoded, so running this program is optional. You can directly use `17` as your public key
+and `470713419953` for your private key without running the generation program.
+
+Note that the modulus is also currently hard-coded.
 
 ## Project Structure
 
@@ -161,7 +171,7 @@ directory. The files and directory structure mirror the "include" directory stru
 
 ### RSA Key Generation
 
-For purposes of this project, we generate a useable private/public key pair under the "rsa_generate" target. Its source 
+For purposes of this project, we generate a usable private/public key pair under the "rsa_generate" target. Its source 
 can be found in `{project_root}/src/rsa-utils/rsa_generate.c`. This is one additional target built by CMake.
 
 
