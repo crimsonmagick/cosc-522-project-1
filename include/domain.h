@@ -2,10 +2,10 @@
 #define COSC522_LODI_DOMAIN_H
 
 #define DOMAIN_SUCCESS 0
+#define MESSAGE_SERIALIZER_SUCCESS 0
+#define MESSAGE_DESERIALIZER_SUCCESS 0
 #define DOMAIN_FAILURE 1
 #define DOMAIN_INIT_FAILURE 2
-
-#include <stddef.h>
 
 typedef struct DomainService DomainService;
 
@@ -33,6 +33,8 @@ typedef struct DomainServiceOpts {
   MessageSerializer outgoingSerializer;
   MessageDeserializer incomingDeserializer;
 } DomainServiceOpts;
+
+int startService(const DomainServiceOpts options, DomainServiceHandle **handle);
 
 
 #endif

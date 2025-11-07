@@ -1,10 +1,52 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "messaging/pke_messaging.h"
+
+#include "domain.h"
+#include "shared.h"
 #include "util/buffers.h"
+#include "util/server_configs.h"
+
+
+int serializeOutgoingPK(PClientToPKServer *toSerialize, char *serialized) {
+  serialized = serializePKClientRequest(toSerialize);
+  return MESSAGE_SERIALIZER_SUCCESS;
+}
+
+int deserialzingIncomingPK(char *serialized, PClientToPKServer *deserialized) {
+  deserialized = deserializePKServerResponse(serialized, PK_SERVER_RESPONSE_SIZE);
+  return MESSAGE_DESERIALIZER_SUCCESS;
+}
+
+int initPKEDomainClient(DomainServiceHandle **handle) {
+  const ServerConfig serverConfig = getServerConfig(PK);
+  const MessageSerializer outgoing = {
+    PK_CLIENT_REQUEST_SIZE,
+    .serializer = (int (*)(void *, char *)) serializeOutgoingPK
+  };
+  const MessageDeserializer incoming = {
+    PK_SERVER_RESPONSE_SIZE,
+    .deserializer = (int (*)(char *, void *)) deserialzingIncomingPK
+  };
+  const DomainServiceOpts options = {
+    .localPort = 0,
+    .remotePort = *serverConfig.port,
+    .timeoutMs = NULL,
+    .remoteHost = serverConfig.address,
+    .outgoingSerializer = outgoing,
+    .incomingDeserializer = incoming
+  };
+
+  DomainServiceHandle *allocatedHandle = NULL;
+  if (startService(options, &allocatedHandle) != DOMAIN_SUCCESS) {
+    return ERROR;
+  }
+  *handle = allocatedHandle;
+  return SUCCESS;
+}
+
 
 char *serializePKClientRequest(const PClientToPKServer *toSerialize) {
   char *serialized = malloc(PK_CLIENT_REQUEST_SIZE);
