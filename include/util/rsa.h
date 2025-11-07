@@ -1,3 +1,7 @@
+/**
+*  Shared interface for generating public/private keys and performing encryption and decryption of timestamps.
+ */
+
 #ifndef COSC522_LODI_RSA_H
 
 // TODO remove hard-coding p and q - generate these when necessary

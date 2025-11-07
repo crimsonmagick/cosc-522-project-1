@@ -1,3 +1,8 @@
+/**
+ * Shared Lodi Server+Client functions for serializing/deserializing domain structs in a network-safe way, converting bytes to and from
+ * big-endian.
+ */
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>

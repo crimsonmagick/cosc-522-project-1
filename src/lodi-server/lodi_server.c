@@ -1,3 +1,12 @@
+/**
+* This source file implements the "Lodi Server" functionality:
+ *
+ * Handles Lodi login:
+ *   1)  Authenticates the client's digital signature against the associated publicKey
+ *   2)  Performs TFA after the digital signature is validated
+ *   3)  Responds to the user with a "success" message if both phases succeed
+ **/
+
 #include <stdio.h>
 #include <arpa/inet.h>
 #include <stdlib.h>

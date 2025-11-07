@@ -1,3 +1,7 @@
+/**
+* Interface for WIP Public authentication functions for simplifying digital sig validation. Not currently used.
+*/
+
 #ifndef COSC522_LODI_AUTHENTICATION_H
 #define COSC522_LODI_AUTHENTICATION_H
 

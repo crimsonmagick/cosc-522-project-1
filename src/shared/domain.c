@@ -1,3 +1,8 @@
+/**
+ *  WIP service for managing interactions between clients and servers while maintaining an open socket and abstracting
+ *  serialization and deserialization.
+ */
+
 #include <arpa/inet.h>
 
 #include "domain.h"

@@ -1,3 +1,8 @@
+/**
+*  Interface for buffer functions, managing the access of bytes of a buffer in a network-safe way, converting from little-endian
+ * to big-endian and from big-endian to little-endian as needed.
+ */
+
 #ifndef COSC522_LODI_BUFFERS_H
 #define COSC522_LODI_BUFFERS_H
 

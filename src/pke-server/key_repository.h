@@ -1,3 +1,7 @@
+/**
+ * Provides interface for persisting and retrieving RSA public keys
+ */
+
 #ifndef COSC522_LODI_KEY_REPOSITORY_H
 #define COSC522_LODI_KEY_REPOSITORY_H
 

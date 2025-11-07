@@ -1,3 +1,7 @@
+/**
+* WIP Public authentication functions for simplifying digital sig validation. Not currently used.
+*/
+
 #include "authentication.h"
 
 #include "shared.h"

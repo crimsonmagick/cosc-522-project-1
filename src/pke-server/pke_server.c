@@ -1,3 +1,12 @@
+/**
+* This source file implements the "PKE Server" functionality:
+ *
+ *   1) Processes key registration
+ *     i) Persists public key in key repository
+ *   2)  Retrieves public keys
+ *     i) Key is fetched from key repository
+ **/
+
 #include <stdio.h>
 #include <arpa/inet.h>
 #include <stdlib.h>

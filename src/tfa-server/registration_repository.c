@@ -1,3 +1,7 @@
+/**
+* Provides persistence for registered client ip addresses and ports
+ **/
+
 #include <string.h>
 
 #include "registration_repository.h"

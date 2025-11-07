@@ -1,6 +1,15 @@
-#include <stdio.h>      /* for printf() and fprintf() */
-#include <arpa/inet.h>  /* for sockaddr_in and inet_addr() */
-#include <stdlib.h>     /* for atoi() and exit() */
+/**
+ * This source file implements the "Lodi Client" functionality:
+ *
+ * 1) Registers user's public key against the PKE Server.
+ *    See registerPublicKey() for the implementation of this functionality
+ * 2) Authenticates against the Lodi Server
+ *    See lodiLogin() for the implementation of this functionality.
+ **/
+
+#include <stdio.h>
+#include <arpa/inet.h>
+#include <stdlib.h>
 #include <time.h>
 
 #include "messaging/pke_messaging.h"

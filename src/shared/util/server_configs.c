@@ -1,3 +1,8 @@
+/**
+ * Helper functions for retrieving server IP Addresses and Ports, enabling sensible defaults if the addresses and ports
+ * are not configured as environment variables.
+ */
+
 #include "util/server_configs.h"
 
 #include <stdlib.h>

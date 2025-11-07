@@ -1,3 +1,8 @@
+/**
+*  WIP service interface for managing interactions between clients and servers while maintaining an open socket and
+*  abstracting serialization and deserialization.
+ */
+
 #ifndef COSC522_LODI_DOMAIN_H
 #define COSC522_LODI_DOMAIN_H
 

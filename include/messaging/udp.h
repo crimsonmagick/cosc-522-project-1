@@ -1,3 +1,7 @@
+/**
+* Interface for UDP convenience functions, simplifying interactions with the network.
+*/
+
 #ifndef COSC522_LODI_MESSAGING_H
 #define COSC522_LODI_MESSAGING_H
 

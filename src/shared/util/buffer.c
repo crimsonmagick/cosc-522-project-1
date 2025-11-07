@@ -1,3 +1,8 @@
+/**
+ * Buffer functions for managing the access of bytes of a buffer in a network-safe way, converting from little-endian
+ * to big-endian and from big-endian to little-endian as needed.
+ */
+
 #include <stdint.h>
 #include <string.h>
 

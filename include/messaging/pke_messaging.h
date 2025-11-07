@@ -1,3 +1,8 @@
+/**
+*  Interface for Shared PKE Server+Client functions for serializing/deserializing domain structs in a network-safe way, converting bytes to and from
+ * big-endian.
+ */
+
 #ifndef COSC522_LODI_PKEMESSAGING_H
 #define COSC522_LODI_PKEMESSAGING_H
 

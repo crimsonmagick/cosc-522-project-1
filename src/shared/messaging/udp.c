@@ -1,3 +1,7 @@
+/**
+* UDP convenience functions, simplifying interactions with the network.
+*/
+
 #include <stdio.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>

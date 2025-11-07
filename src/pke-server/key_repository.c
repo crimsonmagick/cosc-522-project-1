@@ -1,3 +1,7 @@
+/**
+ * Provides persistence for registered User public keys
+ **/
+
 #include <string.h>
 
 #include "key_repository.h"

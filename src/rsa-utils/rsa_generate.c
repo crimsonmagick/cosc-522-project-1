@@ -1,3 +1,8 @@
+/**
+ * Generates a public key/private key pair, and validates that it works against a timestamp sourced from the
+ * system clock.
+ */
+
 #include "util/rsa.h"
 
 #include <stdio.h>

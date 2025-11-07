@@ -1,3 +1,8 @@
+/**
+* Interface for shared Lodi Server+Client functions for serializing/deserializing domain structs in a network-safe way, converting bytes to and from
+ * big-endian.
+ */
+
 #ifndef LODI_LODIMESSAGING_H
 #define LODI_LODIMESSAGING_H
 

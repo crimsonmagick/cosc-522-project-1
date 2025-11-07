@@ -1,6 +1,7 @@
 # COSC 522 Project #1: Implementing Two-Factor Authentication using UDP Sockets
 
 Authors: **Ardeshir (Ari) Hassani and Welby Seely**
+Github Repository: https://github.com/crimsonmagick/cosc-522-project-1
 
 ## Building project
 First, either clone or unzip the project in the parent directory of your choice:

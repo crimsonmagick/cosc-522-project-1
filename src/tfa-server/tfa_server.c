@@ -1,3 +1,11 @@
+/**
+* This source file implements the "TFA Server" functionality:
+ *
+ *   1)  Registers client ip addresses and ports
+ *   2)  Handles login authentication requests from the Lodi server
+ *     i) Interfaces with registered TFA Clients to confirm the push authentication
+ **/
+
 #include <stdio.h>
 #include <arpa/inet.h>
 #include <stdlib.h>

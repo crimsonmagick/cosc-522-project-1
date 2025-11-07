@@ -1,4 +1,8 @@
-#include "../../../include/util/rsa.h"
+/**
+ * Functions for generating public/private keys and performing encryption and decryption of timestamps.
+ */
+
+#include "util/rsa.h"
 
 // adapted from https://en.wikipedia.org/wiki/Euclidean_algorithm
 unsigned long gcd(unsigned long a, unsigned long b) {
