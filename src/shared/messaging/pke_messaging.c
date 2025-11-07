@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <netinet/in.h>
 
-
 #include "messaging/pke_messaging.h"
 
 #include "domain.h"
@@ -37,7 +36,7 @@ int getPublicKey(DomainServiceHandle * handle, struct sockaddr_in *pkeAddr, cons
   return SUCCESS;
 }
 
-int serializeOutgoingPK(PClientToPKServer *toSerialize, char *serialized) {
+int serializeClientPK(PClientToPKServer *toSerialize, char *serialized) {
   size_t offset = 0;
   appendUint32(serialized, &offset, toSerialize->messageType);
   appendUint32(serialized, &offset, toSerialize->userID);
@@ -46,7 +45,7 @@ int serializeOutgoingPK(PClientToPKServer *toSerialize, char *serialized) {
   return MESSAGE_SERIALIZER_SUCCESS;
 }
 
-int deserializeIncomingPK(char *serialized, PKServerToLodiClient *deserialized) {
+int deserializeServerPK(char *serialized, PKServerToLodiClient *deserialized) {
   size_t offset = 0;
   deserialized->messageType = getUint32(serialized, &offset);
   deserialized->userID = getUint32(serialized, &offset);
@@ -56,20 +55,42 @@ int deserializeIncomingPK(char *serialized, PKServerToLodiClient *deserialized) 
 }
 
 int initPKEClientDomain(DomainServiceHandle **handle) {
-  const ServerConfig serverConfig = getServerConfig(PK);
   const MessageSerializer outgoing = {
     PK_CLIENT_REQUEST_SIZE,
-    .serializer = (int (*)(void *, char *)) serializeOutgoingPK
+    .serializer = (int (*)(void *, char *)) serializeClientPK
   };
   const MessageDeserializer incoming = {
     PK_SERVER_RESPONSE_SIZE,
-    .deserializer = (int (*)(char *, void *)) deserializeIncomingPK
+    .deserializer = (int (*)(char *, void *)) deserializeServerPK
   };
   const DomainServiceOpts options = {
     .localPort = 0,
-    .remotePort = serverConfig.port,
     .timeoutMs = NULL,
-    .remoteHost = serverConfig.address,
+    .outgoingSerializer = outgoing,
+    .incomingDeserializer = incoming
+  };
+
+  DomainServiceHandle *allocatedHandle = NULL;
+  if (startService(options, &allocatedHandle) != DOMAIN_SUCCESS) {
+    return ERROR;
+  }
+  *handle = allocatedHandle;
+  return SUCCESS;
+}
+
+int initPKEServerDomain(DomainServiceHandle **handle) {
+  const ServerConfig serverConfig = getServerConfig(PK);
+  const MessageSerializer outgoing = {
+    PK_CLIENT_REQUEST_SIZE,
+    .serializer = (int (*)(void *, char *)) serializeClientPK
+  };
+  const MessageDeserializer incoming = {
+    PK_SERVER_RESPONSE_SIZE,
+    .deserializer = (int (*)(char *, void *)) deserializeServerPK
+  };
+  const DomainServiceOpts options = {
+    .localPort = serverConfig.port,
+    .timeoutMs = NULL,
     .outgoingSerializer = outgoing,
     .incomingDeserializer = incoming
   };

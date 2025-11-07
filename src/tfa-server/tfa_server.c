@@ -22,9 +22,6 @@ int main() {
     // initialize repository
     init();
     const unsigned short serverPort = atoi(getServerConfig(TFA).port);
-    const ServerConfig pkServerConfig = getServerConfig(PK);
-    const unsigned int pkPort = atoi(pkServerConfig.port);
-    const char *pkAddress = pkServerConfig.address;
 
     const int serverSocket = getServerSocket(serverPort, NULL);
     if (serverSocket < 0) {

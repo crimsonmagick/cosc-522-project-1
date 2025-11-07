@@ -29,8 +29,6 @@ typedef struct DomainServiceHandle {
 
 typedef struct DomainServiceOpts {
   char *localPort;
-  char *remoteHost;
-  char *remotePort;
   unsigned int *timeoutMs;
   MessageSerializer outgoingSerializer;
   MessageDeserializer incomingDeserializer;
