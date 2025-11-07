@@ -9,6 +9,7 @@
 #include "messaging/udp.h"
 
 #define TIMEOUT_SECONDS 0
+#define SOCK_FAILURE (-1)
 
 int getServerSocket(const unsigned short serverPort, const char *address) {
   const int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -36,10 +37,39 @@ int getServerSocket(const unsigned short serverPort, const char *address) {
   return sock;
 }
 
-int getClientSocket(const struct timeval *timeout) {
+int getSocket(const struct sockaddr_in *address, const struct timeval *timeout) {
+  const int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+  if (sock < 0) {
+    perror("socket() failed");
+    return SOCK_FAILURE;
+  }
+
+  if (timeout) {
+    const int optResult = setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, timeout, sizeof(*timeout));
+    if (optResult < 0) {
+      perror("Unable to set socket options");
+      close(sock);
+      return SOCK_FAILURE;
+    }
+  }
+
+  if (address && bind(sock, (struct sockaddr *) address, sizeof(*address)) < 0) {
+    perror("bind() failed");
+    close(sock);
+    return SOCK_FAILURE;
+  }
+
+  return sock;
+}
+
+int getUnboundSocket(const struct timeval *timeout) {
   const int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if (sock >= 0 && timeout) {
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, timeout, sizeof(*timeout));
+    const int optResult = setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, timeout, sizeof(*timeout));
+    if (optResult < 0) {
+      close(sock);
+      return -1;
+    }
   }
   return sock;
 }
@@ -48,13 +78,17 @@ int closeSocket(const int socket) {
   return close(socket);
 }
 
-struct sockaddr_in getNetworkAddress(const char *serverIP, const unsigned short serverPort) {
-  struct sockaddr_in serverAddr;
-  memset(&serverAddr, 0, sizeof(serverAddr));
-  serverAddr.sin_family = AF_INET;
-  inet_pton(AF_INET, serverIP, &serverAddr.sin_addr);
-  serverAddr.sin_port = htons(serverPort);
-  return serverAddr;
+struct sockaddr_in getNetworkAddress(const char *ipAddress, const unsigned short serverPort) {
+  struct sockaddr_in addr;
+  memset(&addr, 0, sizeof(addr));
+  addr.sin_family = AF_INET;
+  if (ipAddress) {
+    inet_pton(AF_INET, ipAddress, &addr.sin_addr);
+  } else {
+    addr.sin_addr.s_addr = htonl(INADDR_ANY);
+  }
+  addr.sin_port = htons(serverPort);
+  return addr;
 }
 
 int receiveMessage(const int socket, char *message, const size_t messageSize, struct sockaddr_in *clientAddress) {
@@ -111,7 +145,7 @@ int synchronousSend(const char *bufferIn, const size_t bufferInSize, char *buffe
 int synchronousSendWithClientPort(const char *bufferIn, size_t bufferInSize, char *bufferOut, size_t bufferOutSize, const char *serverIP,
     unsigned short serverPort, unsigned short clientPort) {
   struct timeval timeout = {.tv_sec = TIMEOUT_SECONDS, .tv_usec = 0};
-  const int clientSocket = getClientSocket(&timeout);
+  const int clientSocket = getUnboundSocket(&timeout);
 
   if (clientSocket < 0) {
     return errorClose("Error: Unable to open socket.\n", clientSocket);

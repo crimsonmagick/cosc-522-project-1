@@ -15,4 +15,4 @@ typedef struct {
 
 ServerConfig getServerConfig(const enum Server server);
 
-#endif //COSC522_LODI_SERVER_CONFIGS_H
+#endif
