@@ -105,6 +105,7 @@ int handleTFAPush() {
 
         free(sendBuffer);
         free(receivedMessage);
+        printf("Responded to push auth request successfully!\n");
     }
 }
 
@@ -129,7 +130,7 @@ int registerTFAClient(const unsigned int userID, unsigned long timestamp, unsign
     } else {
         TFAServerToTFAClient *responseDeserialized = deserializeTFAServerResponse(
             responseBuffer, TFA_SERVER_RESPONSE_SIZE);
-        printf("TFA authentication successful! Received: messageType=%u, userID=%u\n",
+        printf("TFA registration successful! Received: messageType=%u, userID=%u\n",
                responseDeserialized->messageType, responseDeserialized->userID);
         free(responseDeserialized);
     }

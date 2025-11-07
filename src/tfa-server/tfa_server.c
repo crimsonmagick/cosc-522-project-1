@@ -2,6 +2,7 @@
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include "shared.h"
 #include "registration_repository.h"
@@ -123,12 +124,53 @@ int main() {
                 printf("Error while sending final ack message for client registration.\n");
             }
         } else if (receivedMessage->messageType == requestAuth) {
+            struct in_addr registeredAddress;
+            unsigned short port;
+            if (getIP(receivedMessage->userID, &registeredAddress, &port) == ERROR) {
+                printf("IP Address was not registered with TFA server! Aborting auth request...\n");
+                continue;
+            }
+
+            TFAServerToTFAClient pushRequest = {
+                .messageType = pushTFA,
+                receivedMessage->userID,
+            };
+
+
+            struct sockaddr_in tfaClientAddr;
+            memset(&tfaClientAddr, 0, sizeof(tfaClientAddr));
+            tfaClientAddr.sin_family = AF_INET;
+            tfaClientAddr.sin_addr = registeredAddress;
+            tfaClientAddr.sin_port = htons(port);
+
+            char *sendBuffer = serializeTFAServerResponse(&pushRequest);
+            int sendSuccess = sendMessage(serverSocket, sendBuffer, TFA_SERVER_RESPONSE_SIZE, &tfaClientAddr);
+            if (sendSuccess == ERROR) {
+                printf("Failed to send push auth request to TFA client, aborting...\n");
+                continue;
+            }
+
+            receivedSuccess = receiveMessage(serverSocket, receivedBuffer, TFA_CLIENT_REQUEST_SIZE,
+                                             &tfaClientAddr);
+            free(sendBuffer);
+            if (receivedSuccess == ERROR) {
+                printf("Error while receiving TFA client push auth message.\n");
+                continue;
+            }
+
+            TFAClientOrLodiServerToTFAServer *tfaClientResponse = deserializeTFAClientRequest(
+                receivedBuffer, TFA_CLIENT_REQUEST_SIZE);
+            if (tfaClientResponse->messageType != ackPushTFA) {
+                printf("Did not receive expected ack push message, aborting registration...\n");
+                continue;
+            }
+
             TFAServerToLodiServer pushNotificationResponse = {
                 responseAuth,
                 receivedMessage->userID
             };
-            char * sendBuffer = serializeTFAServerLodiResponse(&pushNotificationResponse);
-            int sendSuccess = sendMessage(serverSocket, sendBuffer, TFA_SERVER_RESPONSE_SIZE, &clientAddress);
+            sendBuffer = serializeTFAServerLodiResponse(&pushNotificationResponse);
+            sendSuccess = sendMessage(serverSocket, sendBuffer, TFA_SERVER_RESPONSE_SIZE, &clientAddress);
             if (sendSuccess == ERROR) {
                 printf("Error while sending push response to Lodi server\n");
             }

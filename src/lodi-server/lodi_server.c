@@ -112,6 +112,8 @@ int main() {
       continue;
     }
 
+    printf("Validated TFA successfully!\n");
+
     LodiServerToLodiClientAcks toSendMessage = {
       ackLogin,
       receivedMessage->userID,
