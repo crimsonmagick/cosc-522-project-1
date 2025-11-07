@@ -17,9 +17,9 @@ int main() {
     const unsigned long decrypted = decryptTimestamp(encrypted, keys.public, keys.modulus);
     printf("timestamp=%ld, encrypted=%ld, decrypted=%ld\n", timestamp, encrypted, decrypted);
     if (timestamp == decrypted) {
-        printf("Encryption/decryption success!");
+        printf("Encryption/decryption success!\n");
     } else {
-        printf("Encryption/decryption failure...");
+        printf("Encryption/decryption failure...\n");
     }
     return 0;
 }
