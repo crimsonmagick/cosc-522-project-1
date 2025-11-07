@@ -15,6 +15,7 @@
 #define QUIT_OPTION 3
 
 static DomainServiceHandle *pkeDomain = NULL;
+static struct sockaddr_in pkServerAddr;
 
 int getMainOption();
 
@@ -26,7 +27,8 @@ int lodiLogin(unsigned int userID, long timestamp, long digitalSignature);
 
 int main() {
     // initialize domains
-    initPKEDomain(&pkeDomain);
+    initPKEClientDomain(&pkeDomain);
+    pkServerAddr = getServerAddr(PK);
 
     printf("Welcome to the Lodi Client!\n");
     unsigned int userID = getLongInput("user ID");
@@ -120,13 +122,15 @@ int registerPublicKey(const unsigned int userID, const unsigned int publicKey) {
         publicKey
     };
 
-    if (toDomain(pkeDomain, (void *) &requestMessage) == DOMAIN_FAILURE) {
+    if (toDomainHost(pkeDomain, (void *) &requestMessage, &pkServerAddr) == DOMAIN_FAILURE) {
         printf("Unable to send registration, aborting ...\n");
         return ERROR;
     }
 
     PKServerToLodiClient responseMessage;
-    if (fromDomain(pkeDomain, &responseMessage) == DOMAIN_FAILURE) {
+
+    struct sockaddr_in receiveAddress;
+    if (fromDomainHost(pkeDomain, &responseMessage, &receiveAddress) == DOMAIN_FAILURE) {
         printf("Failed to receive registration confirmation, aborting ...\n");
         return ERROR;
     }

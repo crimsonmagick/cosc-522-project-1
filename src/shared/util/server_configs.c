@@ -2,6 +2,8 @@
 
 #include <stdlib.h>
 
+#include "messaging/udp.h"
+
 #define LOCALHOST "127.0.0.1"
 
 static char *SERVER_ADDRESS_KEYS[] = {
@@ -38,4 +40,17 @@ ServerConfig getServerConfig(const enum Server server) {
     .address = address,
     .port = port
   };
+}
+
+struct sockaddr_in getServerAddr(const enum Server server) {
+  char *address = getenv(SERVER_ADDRESS_KEYS[server]);
+  char *port = getenv(SERVER_PORT_KEYS[server]);
+  if (!address) {
+    address = LOCALHOST;
+  }
+  if (!port) {
+    port = SERVER_DEFAULT_PORTS[server];
+  }
+  unsigned short portVal = atoi(port);
+  return getNetworkAddress(address, portVal);
 }

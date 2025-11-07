@@ -13,11 +13,12 @@
 #include "util/server_configs.h"
 
 static DomainServiceHandle *pkeDomain = NULL;
+static struct sockaddr_in pkServerAddr;
 
 int main() {
     // initialize domains
-    initPKEDomain(&pkeDomain);
-
+    initPKEClientDomain(&pkeDomain);
+    pkServerAddr = getServerAddr(PK);
     // initialize repository
     init();
     const unsigned short serverPort = atoi(getServerConfig(TFA).port);
@@ -49,7 +50,7 @@ int main() {
 
         if (receivedMessage->messageType == registerTFA) {
             unsigned int publicKey;
-            getPublicKey(pkeDomain, receivedMessage->userID, &publicKey);
+            getPublicKey(pkeDomain, &pkServerAddr, receivedMessage->userID, &publicKey);
 
             // GOT PUBLIC KEY, NOW AUTHENTICATE
             const unsigned long digitalSig = receivedMessage->digitalSig;

@@ -13,14 +13,14 @@ typedef struct DomainService DomainService;
 
 typedef struct MessageSerializer {
   size_t messageSize;
-  int (*serializer)(void *, char *);
 
+  int (*serializer)(void *, char *);
 } MessageSerializer;
 
 typedef struct MessageDeserializer {
   size_t messageSize;
-  int (*deserializer)(char *, void *);
 
+  int (*deserializer)(char *, void *);
 } MessageDeserializer;
 
 typedef struct DomainServiceHandle {
@@ -28,9 +28,9 @@ typedef struct DomainServiceHandle {
 } DomainServiceHandle;
 
 typedef struct DomainServiceOpts {
-  char * localPort;
-  char * remoteHost;
-  char * remotePort;
+  char *localPort;
+  char *remoteHost;
+  char *remotePort;
   unsigned int *timeoutMs;
   MessageSerializer outgoingSerializer;
   MessageDeserializer incomingDeserializer;
@@ -40,9 +40,9 @@ int startService(const DomainServiceOpts options, DomainServiceHandle **handle);
 
 int stopService(DomainServiceHandle **handle);
 
-int toDomain(DomainServiceHandle *handle, void *message);
+int toDomainHost(DomainServiceHandle *handle, void *message, struct sockaddr_in *hostAddr);
 
-int fromDomain(DomainServiceHandle *handle, void *message);
+int fromDomainHost(DomainServiceHandle *handle, void *message, struct sockaddr_in *hostAddr);
 
 
 #endif

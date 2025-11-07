@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <netinet/in.h>
+
 
 #include "messaging/pke_messaging.h"
 
@@ -9,19 +11,21 @@
 #include "util/buffers.h"
 #include "util/server_configs.h"
 
-int getPublicKey(DomainServiceHandle * handle, const unsigned int userID, unsigned int *publicKey) {
+int getPublicKey(DomainServiceHandle * handle, struct sockaddr_in *pkeAddr, const unsigned int userID,
+  unsigned int *publicKey) {
   const PClientToPKServer requestMessage = {
     .messageType = requestKey,
     userID
 };
 
-  if (toDomain(handle, (void *) &requestMessage) == DOMAIN_FAILURE) {
+  if (toDomainHost(handle, (void *) &requestMessage, pkeAddr) == DOMAIN_FAILURE) {
     printf("Unable to get public key, aborting ...\n");
     return ERROR;
   }
 
   PKServerToLodiClient responseMessage;
-  if (fromDomain(handle, &responseMessage) == DOMAIN_FAILURE) {
+  struct sockaddr_in receivedAddr;
+  if (fromDomainHost(handle, &responseMessage, &receivedAddr) == DOMAIN_FAILURE) {
     printf("Failed to receive public key, aborting ...\n");
     return ERROR;
   }
@@ -32,7 +36,6 @@ int getPublicKey(DomainServiceHandle * handle, const unsigned int userID, unsign
 
   return SUCCESS;
 }
-
 
 int serializeOutgoingPK(PClientToPKServer *toSerialize, char *serialized) {
   size_t offset = 0;
@@ -52,7 +55,7 @@ int deserializeIncomingPK(char *serialized, PKServerToLodiClient *deserialized) 
   return MESSAGE_DESERIALIZER_SUCCESS;
 }
 
-int initPKEDomain(DomainServiceHandle **handle) {
+int initPKEClientDomain(DomainServiceHandle **handle) {
   const ServerConfig serverConfig = getServerConfig(PK);
   const MessageSerializer outgoing = {
     PK_CLIENT_REQUEST_SIZE,

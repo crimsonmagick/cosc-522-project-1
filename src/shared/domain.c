@@ -13,8 +13,7 @@
 
 struct DomainService {
   int sock;
-  struct sockaddr_in hostAddr;
-  struct sockaddr_in remoteAddr;
+  struct sockaddr_in localAddr;
   MessageSerializer outgoingSerializer;
   MessageDeserializer incomingDeserializer;
 };
@@ -50,20 +49,21 @@ int startService(const DomainServiceOpts options, DomainServiceHandle **handle) 
     return DOMAIN_INIT_FAILURE;
   }
   DomainService *domainService = (*handle)->domainService;
-  const long timeoutMs = options.timeoutMs == NULL ? DEFAULT_TIMEOUT_MS : *options.timeoutMs;
-  const long timeoutS = timeoutMs / 1000;
-  const long timeoutUs = timeoutMs % 1000 * 1000;
-  const struct timeval timeout = {.tv_sec = timeoutS, .tv_usec = timeoutUs};
+  // const long timeoutMs = options.timeoutMs == NULL ? DEFAULT_TIMEOUT_MS : *options.timeoutMs;
+  // const long timeoutS = timeoutMs / 1000;
+  // const long timeoutUs = timeoutMs % 1000 * 1000;
+  // const struct timeval timeout = {.tv_sec = timeoutS, .tv_usec = timeoutUs};
   if (options.localPort != 0) {
-    domainService->hostAddr = getNetworkAddress(LOCALHOST, atoi(options.localPort));
-    domainService->sock = getSocket(&domainService->hostAddr, &timeout);
+    domainService->localAddr = getNetworkAddress(LOCALHOST, atoi(options.localPort));
+    // domainService->sock = getSocket(&domainService->hostAddr, &timeout);
+    domainService->sock = getSocket(&domainService->localAddr, NULL);
   } else {
-    domainService->sock = getSocket(NULL, &timeout);
+    // domainService->sock = getSocket(NULL, &timeout);
+    domainService->sock = getSocket(NULL, NULL);
   }
   if (domainService->sock < 0) {
     return failInit(handle);
   }
-  domainService->remoteAddr = getNetworkAddress(options.remoteHost, atoi(options.remotePort));
   domainService->incomingDeserializer = options.incomingDeserializer;
   domainService->outgoingSerializer = options.outgoingSerializer;
 
@@ -84,7 +84,7 @@ int stopService(DomainServiceHandle **handle) {
   return DOMAIN_SUCCESS;
 }
 
-int toDomain(DomainServiceHandle *handle, void *message) {
+int toDomainHost(DomainServiceHandle *handle, void *message, struct sockaddr_in *hostAddr) {
   char *buf = malloc(handle->domainService->outgoingSerializer.messageSize);
   const DomainService *service = handle->domainService;
 
@@ -93,7 +93,7 @@ int toDomain(DomainServiceHandle *handle, void *message) {
   if (service->outgoingSerializer.serializer(message, buf) == MESSAGE_SERIALIZER_FAILURE) {
     printf("Unable to serialize domain message\n");
     status = DOMAIN_FAILURE;
-  } else if (sendMessage(service->sock, buf, service->outgoingSerializer.messageSize, &service->remoteAddr) == ERROR) {
+  } else if (sendMessage(service->sock, buf, service->outgoingSerializer.messageSize, hostAddr) == ERROR) {
     printf("Unable to send message to domain\n");
     status = DOMAIN_FAILURE;
   }
@@ -102,7 +102,7 @@ int toDomain(DomainServiceHandle *handle, void *message) {
   return status;
 }
 
-int fromDomain(DomainServiceHandle *handle, void *message) {
+int fromDomainHost(DomainServiceHandle *handle, void *message, struct sockaddr_in *hostAddr) {
   char *buf = malloc(handle->domainService->incomingDeserializer.messageSize);
   if (!buf) {
     printf("Failed to allocate message buffer\n");
@@ -112,9 +112,7 @@ int fromDomain(DomainServiceHandle *handle, void *message) {
 
   int status = DOMAIN_SUCCESS;
 
-  struct sockaddr_in remoteAddr;
-
-  if (receiveMessage(service->sock, buf, service->incomingDeserializer.messageSize, &remoteAddr)) {
+  if (receiveMessage(service->sock, buf, service->incomingDeserializer.messageSize, hostAddr)) {
     printf("Unable to receive message from domain\n");
     status = DOMAIN_FAILURE;
   } else if (service->incomingDeserializer.deserializer(buf, message) == MESSAGE_DESERIALIZER_FAILURE) {

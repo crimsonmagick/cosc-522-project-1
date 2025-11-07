@@ -12,6 +12,7 @@
 #include "util/server_configs.h"
 
 static DomainServiceHandle *pkeDomain = NULL;
+static struct sockaddr_in pkServerAddress;
 
 int sendPushRequest(const unsigned int userID) {
   const ServerConfig config = getServerConfig(TFA);
@@ -40,7 +41,8 @@ int sendPushRequest(const unsigned int userID) {
 }
 
 int main() {
-  initPKEDomain(&pkeDomain);
+  initPKEClientDomain(&pkeDomain);
+  pkServerAddress = getServerAddr(PK);
   const unsigned short serverPort = atoi(getServerConfig(LODI).port);
 
   const int serverSocket = getServerSocket(serverPort, NULL);
@@ -64,7 +66,7 @@ int main() {
 
     unsigned int publicKey;
     bool authenticated = false;
-    if (getPublicKey(pkeDomain, receivedMessage->userID, &publicKey) == ERROR) {
+    if (getPublicKey(pkeDomain, &pkServerAddress, receivedMessage->userID, &publicKey) == ERROR) {
       printf("Failed to retrieve public key!\n");
     } else {
       const unsigned long decrypted = decryptTimestamp(receivedMessage->digitalSig, publicKey, MODULUS);

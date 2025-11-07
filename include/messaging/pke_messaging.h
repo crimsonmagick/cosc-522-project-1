@@ -4,6 +4,7 @@
 #define PK_CLIENT_REQUEST_SIZE (3 * sizeof(uint32_t))
 #define PK_SERVER_RESPONSE_SIZE (3 * sizeof(uint32_t))
 #include "domain.h"
+#include <netinet/in.h>
 
 typedef struct {
   enum { ackRegisterKey, responsePublicKey } messageType; /* same as unsigned int */
@@ -19,15 +20,18 @@ typedef struct {
   unsigned int publicKey; /* user's public key or 0 if message_type is request_key */
 } PClientToPKServer;
 
-int initPKEDomain(DomainServiceHandle **handle);
+int initPKEClientDomain(DomainServiceHandle **handle);
 
-int getPublicKey(DomainServiceHandle * handle, const unsigned int userID, unsigned int *publicKey);
+int initPKEServerDomain(DomainServiceHandle **handle);
+
+int getPublicKey(DomainServiceHandle * handle, struct sockaddr_in *pkeAddr, const unsigned int userID,
+  unsigned int *publicKey);
 
 char *serializePKClientRequest(const PClientToPKServer *toSerialize);
 
 PClientToPKServer *deserializePKClientRequest(const char *serialized, const size_t size);
 
-char * serializePKServerResponse(const PKServerToLodiClient *toSerialize);
+char *serializePKServerResponse(const PKServerToLodiClient *toSerialize);
 
 PKServerToLodiClient *deserializePKServerResponse(const char *serialized, const size_t size);
 
