@@ -19,7 +19,7 @@ int serializeOutgoingPK(PClientToPKServer *toSerialize, char *serialized) {
   return MESSAGE_SERIALIZER_SUCCESS;
 }
 
-int deserializeIncomingPK(char *serialized, PClientToPKServer *deserialized) {
+int deserializeIncomingPK(char *serialized, PKServerToLodiClient *deserialized) {
   size_t offset = 0;
   deserialized->messageType = getUint32(serialized, &offset);
   deserialized->userID = getUint32(serialized, &offset);

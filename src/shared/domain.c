@@ -117,7 +117,7 @@ int fromDomain(DomainServiceHandle *handle, void *message) {
   if (receiveMessage(service->sock, buf, service->incomingDeserializer.messageSize, &remoteAddr)) {
     printf("Unable to receive message from domain\n");
     status = DOMAIN_FAILURE;
-  } else if (service->incomingDeserializer.deserializer(message, buf) == MESSAGE_DESERIALIZER_FAILURE) {
+  } else if (service->incomingDeserializer.deserializer(buf, message) == MESSAGE_DESERIALIZER_FAILURE) {
     printf("Unable to deserialize domain message\n");
     status = DOMAIN_FAILURE;
   }

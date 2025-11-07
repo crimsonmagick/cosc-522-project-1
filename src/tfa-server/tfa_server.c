@@ -12,7 +12,37 @@
 #include "util/rsa.h"
 #include "util/server_configs.h"
 
+static DomainServiceHandle *pkeDomain = NULL;
+
+int getPublicKey(const unsigned int userID, unsigned int *publicKey) {
+    const PClientToPKServer requestMessage = {
+        .messageType = requestKey,
+        userID
+    };
+
+    if (toDomain(pkeDomain, (void *) &requestMessage) == DOMAIN_FAILURE) {
+        printf("Unable to get public key, aborting ...\n");
+        return ERROR;
+    }
+
+    PKServerToLodiClient responseMessage;
+    if (fromDomain(pkeDomain, &responseMessage) == DOMAIN_FAILURE) {
+        printf("Failed to receive public key, aborting ...\n");
+        return ERROR;
+    }
+
+    printf("Received public key successfully! Received: messageType=%u, userID=%u, publicKey=%u\n",
+           responseMessage.messageType, responseMessage.userID, responseMessage.publicKey);
+    *publicKey = responseMessage.publicKey;
+
+    return SUCCESS;
+}
+
 int main() {
+    // initialize domains
+    initPKEDomain(&pkeDomain);
+
+    // initialize repository
     init();
     const unsigned short serverPort = atoi(getServerConfig(TFA).port);
     const ServerConfig pkServerConfig = getServerConfig(PK);
@@ -42,30 +72,8 @@ int main() {
             receivedBuffer, TFA_CLIENT_REQUEST_SIZE);
 
         if (receivedMessage->messageType == registerTFA) {
-            // GET PUBLIC KEY
-            PClientToPKServer pkRequest = {
-                .messageType = requestKey,
-                .userID = receivedMessage->userID
-            };
-
-            char *pkRequestBuffer = serializePKClientRequest(&pkRequest);
-            char pkResponseBuffer[PK_SERVER_RESPONSE_SIZE];
-            const int pkSendStatus = synchronousSend(pkRequestBuffer, PK_CLIENT_REQUEST_SIZE, pkResponseBuffer,
-                                                     PK_SERVER_RESPONSE_SIZE, pkAddress, pkPort);
-            free(pkRequestBuffer);
-
-            if (pkSendStatus == ERROR) {
-                printf("Error while sending PK public key request message. Continuing...\n");
-                continue;
-            }
-
-            PKServerToLodiClient *pkResponseDeserialized = deserializePKServerResponse(
-                pkResponseBuffer, PK_SERVER_RESPONSE_SIZE);
-            printf("Got public key! Received: messageType=%u, userID=%u, publicKey=%u\n",
-                   pkResponseDeserialized->messageType, pkResponseDeserialized->userID,
-                   pkResponseDeserialized->publicKey);
-            const unsigned long publicKey = pkResponseDeserialized->publicKey;
-            free(pkResponseDeserialized);
+            unsigned int publicKey;
+            getPublicKey(receivedMessage->userID, &publicKey);
 
             // GOT PUBLIC KEY, NOW AUTHENTICATE
             const unsigned long digitalSig = receivedMessage->digitalSig;
