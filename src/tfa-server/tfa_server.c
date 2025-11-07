@@ -14,30 +14,6 @@
 
 static DomainServiceHandle *pkeDomain = NULL;
 
-int getPublicKey(const unsigned int userID, unsigned int *publicKey) {
-    const PClientToPKServer requestMessage = {
-        .messageType = requestKey,
-        userID
-    };
-
-    if (toDomain(pkeDomain, (void *) &requestMessage) == DOMAIN_FAILURE) {
-        printf("Unable to get public key, aborting ...\n");
-        return ERROR;
-    }
-
-    PKServerToLodiClient responseMessage;
-    if (fromDomain(pkeDomain, &responseMessage) == DOMAIN_FAILURE) {
-        printf("Failed to receive public key, aborting ...\n");
-        return ERROR;
-    }
-
-    printf("Received public key successfully! Received: messageType=%u, userID=%u, publicKey=%u\n",
-           responseMessage.messageType, responseMessage.userID, responseMessage.publicKey);
-    *publicKey = responseMessage.publicKey;
-
-    return SUCCESS;
-}
-
 int main() {
     // initialize domains
     initPKEDomain(&pkeDomain);
@@ -73,7 +49,7 @@ int main() {
 
         if (receivedMessage->messageType == registerTFA) {
             unsigned int publicKey;
-            getPublicKey(receivedMessage->userID, &publicKey);
+            getPublicKey(pkeDomain, receivedMessage->userID, &publicKey);
 
             // GOT PUBLIC KEY, NOW AUTHENTICATE
             const unsigned long digitalSig = receivedMessage->digitalSig;

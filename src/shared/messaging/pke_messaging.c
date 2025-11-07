@@ -9,6 +9,30 @@
 #include "util/buffers.h"
 #include "util/server_configs.h"
 
+int getPublicKey(DomainServiceHandle * handle, const unsigned int userID, unsigned int *publicKey) {
+  const PClientToPKServer requestMessage = {
+    .messageType = requestKey,
+    userID
+};
+
+  if (toDomain(handle, (void *) &requestMessage) == DOMAIN_FAILURE) {
+    printf("Unable to get public key, aborting ...\n");
+    return ERROR;
+  }
+
+  PKServerToLodiClient responseMessage;
+  if (fromDomain(handle, &responseMessage) == DOMAIN_FAILURE) {
+    printf("Failed to receive public key, aborting ...\n");
+    return ERROR;
+  }
+
+  printf("Received public key successfully! Received: messageType=%u, userID=%u, publicKey=%u\n",
+         responseMessage.messageType, responseMessage.userID, responseMessage.publicKey);
+  *publicKey = responseMessage.publicKey;
+
+  return SUCCESS;
+}
+
 
 int serializeOutgoingPK(PClientToPKServer *toSerialize, char *serialized) {
   size_t offset = 0;

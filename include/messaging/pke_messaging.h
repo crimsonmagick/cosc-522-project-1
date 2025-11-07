@@ -21,6 +21,8 @@ typedef struct {
 
 int initPKEDomain(DomainServiceHandle **handle);
 
+int getPublicKey(DomainServiceHandle * handle, const unsigned int userID, unsigned int *publicKey);
+
 char *serializePKClientRequest(const PClientToPKServer *toSerialize);
 
 PClientToPKServer *deserializePKClientRequest(const char *serialized, const size_t size);
