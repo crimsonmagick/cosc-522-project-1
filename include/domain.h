@@ -11,6 +11,10 @@
 
 typedef struct DomainService DomainService;
 
+typedef struct DomainServiceHandle {
+  DomainService *domainService;
+} DomainServiceHandle;
+
 typedef struct MessageSerializer {
   size_t messageSize;
 
@@ -23,9 +27,6 @@ typedef struct MessageDeserializer {
   int (*deserializer)(char *, void *);
 } MessageDeserializer;
 
-typedef struct DomainServiceHandle {
-  DomainService *domainService;
-} DomainServiceHandle;
 
 typedef struct DomainServiceOpts {
   char *localPort;
