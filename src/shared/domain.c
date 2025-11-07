@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "shared.h"
 #include "messaging/udp.h"
 
 #define DEFAULT_TIMEOUT_MS 100
@@ -54,7 +55,7 @@ int startService(const DomainServiceOpts options, DomainServiceHandle **handle) 
   const long timeoutUs = timeoutMs % 1000 * 1000;
   const struct timeval timeout = {.tv_sec = timeoutS, .tv_usec = timeoutUs};
   if (options.localPort != 0) {
-    domainService->hostAddr = getNetworkAddress(LOCALHOST, options.localPort);
+    domainService->hostAddr = getNetworkAddress(LOCALHOST, atoi(options.localPort));
     domainService->sock = getSocket(&domainService->hostAddr, &timeout);
   } else {
     domainService->sock = getSocket(NULL, &timeout);
@@ -62,7 +63,7 @@ int startService(const DomainServiceOpts options, DomainServiceHandle **handle) 
   if (domainService->sock < 0) {
     return failInit(handle);
   }
-  domainService->remoteAddr = getNetworkAddress(options.remoteHost, options.remotePort);
+  domainService->remoteAddr = getNetworkAddress(options.remoteHost, atoi(options.remotePort));
   domainService->incomingDeserializer = options.incomingDeserializer;
   domainService->outgoingSerializer = options.outgoingSerializer;
 
@@ -81,4 +82,45 @@ int stopService(DomainServiceHandle **handle) {
     *handle = NULL;
   }
   return DOMAIN_SUCCESS;
+}
+
+int toDomain(DomainServiceHandle *handle, void *message) {
+  char *buf = malloc(handle->domainService->outgoingSerializer.messageSize);
+  const DomainService *service = handle->domainService;
+
+  int status = DOMAIN_SUCCESS;
+
+  if (service->outgoingSerializer.serializer(message, buf) == MESSAGE_SERIALIZER_FAILURE) {
+    printf("Unable to serialize domain message\n");
+    status = DOMAIN_FAILURE;
+  } else if (sendMessage(service->sock, buf, service->outgoingSerializer.messageSize, &service->remoteAddr) == ERROR) {
+    printf("Unable to send message to domain\n");
+    status = DOMAIN_FAILURE;
+  }
+
+  free(buf);
+  return status;
+}
+
+int fromDomain(DomainServiceHandle *handle, void *message) {
+  char *buf = malloc(handle->domainService->incomingDeserializer.messageSize);
+  if (!buf) {
+    printf("Failed to allocate message buffer\n");
+    return DOMAIN_FAILURE;
+  }
+  const DomainService *service = handle->domainService;
+
+  int status = DOMAIN_SUCCESS;
+
+  struct sockaddr_in remoteAddr;
+
+  if (receiveMessage(service->sock, buf, service->incomingDeserializer.messageSize, &remoteAddr)) {
+    printf("Unable to receive message from domain\n");
+    status = DOMAIN_FAILURE;
+  } else if (service->incomingDeserializer.deserializer(message, buf) == MESSAGE_DESERIALIZER_FAILURE) {
+    printf("Unable to deserialize domain message\n");
+    status = DOMAIN_FAILURE;
+  }
+  free(buf);
+  return status;
 }

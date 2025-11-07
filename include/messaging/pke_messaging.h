@@ -3,6 +3,7 @@
 
 #define PK_CLIENT_REQUEST_SIZE (3 * sizeof(uint32_t))
 #define PK_SERVER_RESPONSE_SIZE (3 * sizeof(uint32_t))
+#include "domain.h"
 
 typedef struct {
   enum { ackRegisterKey, responsePublicKey } messageType; /* same as unsigned int */
@@ -17,6 +18,8 @@ typedef struct {
   unsigned int userID; /* user's identifier or requested user identifier*/
   unsigned int publicKey; /* user's public key or 0 if message_type is request_key */
 } PClientToPKServer;
+
+int initPKEDomain(DomainServiceHandle **handle);
 
 char *serializePKClientRequest(const PClientToPKServer *toSerialize);
 

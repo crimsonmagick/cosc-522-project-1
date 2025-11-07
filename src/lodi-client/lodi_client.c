@@ -14,6 +14,8 @@
 #define LOGIN_OPTION 2
 #define QUIT_OPTION 3
 
+static DomainServiceHandle *pkeDomain = NULL;
+
 int getMainOption();
 
 unsigned long getLongInput(char *inputName);
@@ -22,8 +24,10 @@ int registerPublicKey(unsigned int userID, unsigned int publicKey);
 
 int lodiLogin(unsigned int userID, long timestamp, long digitalSignature);
 
-
 int main() {
+    // initialize domains
+    initPKEDomain(&pkeDomain);
+
     printf("Welcome to the Lodi Client!\n");
     unsigned int userID = getLongInput("user ID");
     printf("Now choose from the following options:\n");
@@ -110,30 +114,27 @@ unsigned long getLongInput(char *inputName) {
 }
 
 int registerPublicKey(const unsigned int userID, const unsigned int publicKey) {
-    const ServerConfig config = getServerConfig(PK);
     const PClientToPKServer requestMessage = {
         registerKey,
         userID,
         publicKey
     };
 
-    char *requestBuffer = serializePKClientRequest(&requestMessage);
-    char responseBuffer[PK_SERVER_RESPONSE_SIZE];
-    const int sendStatus = synchronousSend(requestBuffer, PK_CLIENT_REQUEST_SIZE, responseBuffer,
-                                           PK_SERVER_RESPONSE_SIZE, config.address, atoi(config.port));
-    free(requestBuffer);
-
-    if (sendStatus == ERROR) {
-        printf("Aborting registration...\n");
-    } else {
-        PKServerToLodiClient *responseDeserialized = deserializePKServerResponse(
-            responseBuffer, PK_SERVER_RESPONSE_SIZE);
-        printf("Registration successful! Received: messageType=%u, userID=%u, publicKey=%u\n",
-               responseDeserialized->messageType, responseDeserialized->userID, responseDeserialized->publicKey);
-        free(responseDeserialized);
+    if (toDomain(pkeDomain, (void *) &requestMessage) == DOMAIN_FAILURE) {
+        printf("Unable to send registration, aborting ...\n");
+        return ERROR;
     }
 
-    return sendStatus;
+    PKServerToLodiClient responseMessage;
+    if (fromDomain(pkeDomain, &responseMessage) == DOMAIN_FAILURE) {
+        printf("Failed to receive registration confirmation, aborting ...\n");
+        return ERROR;
+    }
+
+    printf("Registration successful! Received: messageType=%u, userID=%u, publicKey=%u\n",
+           responseMessage.messageType, responseMessage.userID, responseMessage.publicKey);
+
+    return SUCCESS;
 }
 
 int lodiLogin(const unsigned int userID, const long timestamp, const long digitalSignature) {

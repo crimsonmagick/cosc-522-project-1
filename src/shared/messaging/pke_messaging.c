@@ -11,16 +11,24 @@
 
 
 int serializeOutgoingPK(PClientToPKServer *toSerialize, char *serialized) {
-  serialized = serializePKClientRequest(toSerialize);
+  size_t offset = 0;
+  appendUint32(serialized, &offset, toSerialize->messageType);
+  appendUint32(serialized, &offset, toSerialize->userID);
+  appendUint32(serialized, &offset, toSerialize->publicKey);
+
   return MESSAGE_SERIALIZER_SUCCESS;
 }
 
-int deserialzingIncomingPK(char *serialized, PClientToPKServer *deserialized) {
-  deserialized = deserializePKServerResponse(serialized, PK_SERVER_RESPONSE_SIZE);
+int deserializeIncomingPK(char *serialized, PClientToPKServer *deserialized) {
+  size_t offset = 0;
+  deserialized->messageType = getUint32(serialized, &offset);
+  deserialized->userID = getUint32(serialized, &offset);
+  deserialized->publicKey = getUint32(serialized, &offset);
+
   return MESSAGE_DESERIALIZER_SUCCESS;
 }
 
-int initPKEDomainClient(DomainServiceHandle **handle) {
+int initPKEDomain(DomainServiceHandle **handle) {
   const ServerConfig serverConfig = getServerConfig(PK);
   const MessageSerializer outgoing = {
     PK_CLIENT_REQUEST_SIZE,
@@ -28,11 +36,11 @@ int initPKEDomainClient(DomainServiceHandle **handle) {
   };
   const MessageDeserializer incoming = {
     PK_SERVER_RESPONSE_SIZE,
-    .deserializer = (int (*)(char *, void *)) deserialzingIncomingPK
+    .deserializer = (int (*)(char *, void *)) deserializeIncomingPK
   };
   const DomainServiceOpts options = {
     .localPort = 0,
-    .remotePort = *serverConfig.port,
+    .remotePort = serverConfig.port,
     .timeoutMs = NULL,
     .remoteHost = serverConfig.address,
     .outgoingSerializer = outgoing,
@@ -46,7 +54,6 @@ int initPKEDomainClient(DomainServiceHandle **handle) {
   *handle = allocatedHandle;
   return SUCCESS;
 }
-
 
 char *serializePKClientRequest(const PClientToPKServer *toSerialize) {
   char *serialized = malloc(PK_CLIENT_REQUEST_SIZE);

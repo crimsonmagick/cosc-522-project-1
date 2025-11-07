@@ -3,7 +3,9 @@
 
 #define DOMAIN_SUCCESS 0
 #define MESSAGE_SERIALIZER_SUCCESS 0
+#define MESSAGE_SERIALIZER_FAILURE 1
 #define MESSAGE_DESERIALIZER_SUCCESS 0
+#define MESSAGE_DESERIALIZER_FAILURE 1
 #define DOMAIN_FAILURE 1
 #define DOMAIN_INIT_FAILURE 2
 
@@ -26,15 +28,21 @@ typedef struct DomainServiceHandle {
 } DomainServiceHandle;
 
 typedef struct DomainServiceOpts {
-  unsigned short localPort;
-  unsigned short remotePort;
-  unsigned int *timeoutMs;
+  char * localPort;
   char * remoteHost;
+  char * remotePort;
+  unsigned int *timeoutMs;
   MessageSerializer outgoingSerializer;
   MessageDeserializer incomingDeserializer;
 } DomainServiceOpts;
 
 int startService(const DomainServiceOpts options, DomainServiceHandle **handle);
+
+int stopService(DomainServiceHandle **handle);
+
+int toDomain(DomainServiceHandle *handle, void *message);
+
+int fromDomain(DomainServiceHandle *handle, void *message);
 
 
 #endif
