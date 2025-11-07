@@ -5,7 +5,6 @@
 #include <unistd.h>
 
 #include "shared.h"
-#include "logging/logging.h"
 #include "messaging/udp.h"
 
 #define TIMEOUT_SECONDS 0
@@ -14,7 +13,7 @@
 int getServerSocket(const unsigned short serverPort, const char *address) {
   const int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if (sock < 0) {
-    logError("socket() failed");
+    perror("socket() failed");
     return sock;
   }
 
@@ -30,7 +29,7 @@ int getServerSocket(const unsigned short serverPort, const char *address) {
   serverAddr.sin_port = htons(serverPort);
 
   if (bind(sock, (struct sockaddr *) &serverAddr, sizeof(serverAddr)) < 0) {
-    logError("bind() failed");
+    perror("bind() failed");
     return sock;
   }
 
@@ -96,7 +95,7 @@ int receiveMessage(const int socket, char *message, const size_t messageSize, st
   const ssize_t numBytes = recvfrom(socket, message, messageSize, 0,
                                     (struct sockaddr *) clientAddress, &clientAddrLen);
   if (numBytes < 0) {
-    logError("recvfrom() failed");
+    perror("recvfrom() failed");
     return ERROR;
   }
 
@@ -119,7 +118,7 @@ int sendMessage(const int socket, const char *messageBuffer, const size_t messag
                                 sizeof(*destinationAddress));
 
   if (numBytes < 0) {
-    logError("sendTo() failed");
+    perror("sendTo() failed");
     return ERROR;
   }
 

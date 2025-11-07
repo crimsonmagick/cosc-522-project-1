@@ -39,7 +39,7 @@ add_executable(tfa_server
     src/tfa-server/registration_repository.h
 )
 
-add_executable(rsa_test
-    src/rsa-test/rsa_test.c
+add_executable(rsa_generate
+    src/rsa-utils/rsa_generate.c
     ${COMMON_SRC}
 )
