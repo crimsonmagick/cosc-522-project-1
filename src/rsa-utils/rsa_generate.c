@@ -8,6 +8,10 @@
 #include <stdio.h>
 #include <time.h>
 
+/**
+ * Generates a fixed public key and private key, printing to output
+ * @return
+ */
 int main() {
     // generated large primes at https://www.browserling.com/tools/prime-numbers
     // note that q * p has to be bigger than the timestamp

@@ -11,16 +11,31 @@
 
 unsigned int keyStore[SIZE];
 
+/**
+ * Constructor function
+ */
 void initRepository() {
   memset(keyStore, 0, SIZE * sizeof(unsigned int));
 }
 
+/**
+ * Persists a public key
+ * @param userId
+ * @param publicKey
+ * @return ERROR, SUCCESS
+ */
 int addKey(unsigned int userId, unsigned int publicKey) {
   const unsigned int idx = userId % SIZE;
   keyStore[idx] = publicKey;
   return SUCCESS;
 }
 
+/**
+ * Retrieves publicKey
+ * @param userId user to retrieve for
+ * @param publicKey  output, the public key
+ * @return ERROR, SUCCESS
+ */
 int getKey(unsigned int userId, unsigned int *publicKey) {
   const unsigned int idx = userId % SIZE;
   const unsigned int retrieved = keyStore[idx];

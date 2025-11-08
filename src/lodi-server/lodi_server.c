@@ -26,6 +26,11 @@ static struct sockaddr_in lodiServerAddress;
 static DomainServiceHandle *tfaDomain = NULL;
 static struct sockaddr_in tfaServerAddress;
 
+/**
+ * Send a push request to the TFA server
+ * @param userID user to authenticate
+ * @return ERROR or SUCCESS
+ */
 int sendPushRequest(const unsigned int userID) {
   const TFAClientOrLodiServerToTFAServer requestMessage = {
     .messageType = requestAuth,
@@ -50,6 +55,9 @@ int sendPushRequest(const unsigned int userID) {
   return SUCCESS;
 }
 
+/**
+ * Lodi Server infinite loop
+ */
 int main() {
   initPKEClientDomain(&pkeDomain);
   initLodiServerDomain(&lodiDomain);
@@ -67,34 +75,42 @@ int main() {
       printf("Failed to handle incoming PClientToLodiServer message.\n");
       continue;
     }
+    printf("Req E. 1. Received login message from Lodi client\n");
 
     unsigned int publicKey;
     bool authenticated = false;
     if (getPublicKey(pkeDomain, &pkServerAddress, receivedMessage.userID, &publicKey) == ERROR) {
       printf("Failed to retrieve public key!\n");
     } else {
+      printf("E 1. a. 1) a. and b. sent requestPublicKey, received responsePublicKey");
       const unsigned long decrypted = decryptTimestamp(receivedMessage.digitalSig, publicKey, MODULUS);
       if (decrypted == receivedMessage.timestamp) {
         authenticated = true;
-        printf("Decrypted timestamp successfully! timestamp=%lu \n", decrypted);
+        printf("Req E 1. a. 1) b) Decrypted timestamp successfully! timestamp=%lu \n", decrypted);
       } else {
         printf("Failed to decrypt timestamp! timestamp=%lu, decrypted=%lu \n",
                receivedMessage.timestamp, decrypted);
       }
     }
 
+    /*
+     * IMPORTANT NOTE!!! E 1. c. 1) mentions sending a corresponding ERROR message.
+     * This *cannot* be done as the struct enum LodiServerToLodiClientAcks does not have a failure status!!!
+     * Opted to allow clients to use timeouts as failures instead. It was a choice between the requirement of using
+     * the structs + enums or expanding it. We chose to keep the struct as-is.
+     */
     if (authenticated) {
       printf("Verifying login with TFA...\n");
       if (sendPushRequest(receivedMessage.userID) == ERROR) {
-        printf("Failed to authenticate with push confirmation! Continuing without response...\n");
+        printf("Req E 1. c. 1 Failed to authenticate with push confirmation! Continuing without response...\n");
         continue;
       }
     } else {
-      printf("Failed to authenticate with public key! Continuing without response...\n");
+      printf("Req E 1. c. 1) b)Failed to authenticate with public key! Continuing without response...\n");
       continue;
     }
 
-    printf("Validated TFA successfully!\n");
+    printf("Req E 1. b. 1) Validated TFA successfully!\n");
 
     LodiServerToLodiClientAcks toSendMessage = {
       ackLogin,

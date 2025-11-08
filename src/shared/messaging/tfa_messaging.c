@@ -7,15 +7,17 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "messaging/tfa_messaging.h"
-
 #include <stdbool.h>
 
 #include "domain.h"
+#include "messaging/tfa_messaging.h"
 #include "shared.h"
 #include "util/buffers.h"
 #include "util/server_configs.h"
+
+/*
+ * Boilerplate serdes functions
+ */
 
 int serializeClientTFA(TFAClientOrLodiServerToTFAServer *toSerialize, char *serialized) {
   size_t offset = 0;
@@ -52,6 +54,10 @@ int deserializeServerTFA(char *serialized, TFAServerToLodiServer *deserialized) 
 
   return MESSAGE_DESERIALIZER_SUCCESS;
 }
+
+/*
+ * Boilerplate DomainService constructor functions
+ */
 
 int initTFAClientDomain(DomainServiceHandle **handle, const bool isDuplex) {
   const MessageSerializer outgoing = {

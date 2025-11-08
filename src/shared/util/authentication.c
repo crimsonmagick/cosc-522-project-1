@@ -7,6 +7,7 @@
 #include "shared.h"
 #include "util/rsa.h"
 
+// not currently used
 int authenticate(unsigned long signature, unsigned long nonce, unsigned long publicKey) {
   const unsigned long decrypted = decryptTimestamp(signature, publicKey, MODULUS);
   if (decrypted != signature) {

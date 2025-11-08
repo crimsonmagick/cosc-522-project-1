@@ -15,12 +15,21 @@
 #include "util/buffers.h"
 #include "util/server_configs.h"
 
-int getPublicKey(DomainServiceHandle * handle, struct sockaddr_in *pkeAddr, const unsigned int userID,
-  unsigned int *publicKey) {
+/**
+ * Gets the public key for a user for the PKE Server
+ *
+ * @param handle Domain Service to use to retrieve public key
+ * @param pkeAddr Domain Service address
+ * @param userID user to retrieve for
+ * @param publicKey output, the retrieved public key
+ * @return ERROR, SUCCESS
+ */
+int getPublicKey(DomainServiceHandle *handle, struct sockaddr_in *pkeAddr, const unsigned int userID,
+                 unsigned int *publicKey) {
   const PClientToPKServer requestMessage = {
     .messageType = requestKey,
     userID
-};
+  };
 
   if (toDomainHost(handle, (void *) &requestMessage, pkeAddr) == DOMAIN_FAILURE) {
     printf("Unable to get public key, aborting ...\n");
@@ -40,6 +49,10 @@ int getPublicKey(DomainServiceHandle * handle, struct sockaddr_in *pkeAddr, cons
 
   return SUCCESS;
 }
+
+/*
+ * Boilerplate serdes functions
+ */
 
 int serializeClientPK(PClientToPKServer *toSerialize, char *serialized) {
   size_t offset = 0;
@@ -100,6 +113,10 @@ int initPKEClientDomain(DomainServiceHandle **handle) {
   *handle = allocatedHandle;
   return SUCCESS;
 }
+
+/*
+ * Boilerplate DomainService constructor functions
+ */
 
 int initPKEServerDomain(DomainServiceHandle **handle) {
   const ServerConfig serverConfig = getServerConfig(PK);

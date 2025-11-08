@@ -36,11 +36,13 @@ int main() {
     };
 
     if (receivedMessage.messageType == registerKey) {
+      printf("Req D. 1. a. received registerKey message \n");
       addKey(receivedMessage.userID, receivedMessage.publicKey);
       responseMessage.messageType = ackRegisterKey;
       responseMessage.publicKey = receivedMessage.publicKey;
-      printf("Added publicKey=%u for userId=%u\n", responseMessage.publicKey, responseMessage.userID);
+      printf("Req 1. b. Added publicKey=%u for userId=%u\n", responseMessage.publicKey, responseMessage.userID);
     } else if (receivedMessage.messageType == requestKey) {
+      printf("Req D. 2. a. received registerKey message \n");
       unsigned int publicKey;
       if (getKey(receivedMessage.userID, &publicKey) == ERROR) {
         printf("publicKey=%u not found.\n", receivedMessage.publicKey);
@@ -48,13 +50,16 @@ int main() {
         responseMessage.publicKey = publicKey;
       }
       responseMessage.messageType = responsePublicKey;
+      printf("Req D. 2. b. responding to requestKey message with responsePublicKey\n");
     } else {
-      printf("Received message with unknown message type.\n");
+      printf("Warning: Received message with unknown message type.\n");
     }
 
     const int sendSuccess = toDomainHost(pkeDomain, &responseMessage, &clientAddress);
     if (sendSuccess == ERROR) {
       printf("Error while sending message.\n");
+    } else {
+      printf("Responded to client successfully.\n");
     }
   }
 }

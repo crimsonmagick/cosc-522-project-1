@@ -25,10 +25,23 @@ typedef struct {
   unsigned int publicKey; /* user's public key or 0 if message_type is request_key */
 } PClientToPKServer;
 
+/*
+ * Constructor functions
+ */
+
 int initPKEClientDomain(DomainServiceHandle **handle);
 
 int initPKEServerDomain(DomainServiceHandle **handle);
 
+/**
+ * Gets the public key for a user for the PKE Server
+ *
+ * @param handle Domain Service to use to retrieve public key
+ * @param pkeAddr Domain Service address
+ * @param userID user to retrieve for
+ * @param publicKey output, the retrieved public key
+ * @return ERROR, SUCCESS
+ */
 int getPublicKey(DomainServiceHandle * handle, struct sockaddr_in *pkeAddr, const unsigned int userID,
   unsigned int *publicKey);
 

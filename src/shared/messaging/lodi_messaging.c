@@ -14,6 +14,9 @@
 #include "util/buffers.h"
 #include "util/server_configs.h"
 
+/*
+ * Boilerplate serdes functions
+ */
 
 int serializeClientLodi(PClientToLodiServer *toSerialize, char *serialized) {
   size_t offset = 0;
@@ -52,6 +55,10 @@ int deserializeServerLodi(char *serialized, LodiServerToLodiClientAcks *deserial
 
   return MESSAGE_DESERIALIZER_SUCCESS;
 }
+
+/*
+ * Boilerplate DomainService constructor functions
+ */
 
 int initLodiClientDomain(DomainServiceHandle **handle) {
   const MessageSerializer outgoing = {

@@ -34,6 +34,11 @@ int failInit(DomainServiceHandle **handle) {
   return DOMAIN_INIT_FAILURE;
 }
 
+/**
+ * Handles memory allocation of service
+ * @param handle  The return value, the abstracted handle
+ * @return DOMAIN_INIT_FAILURE or DOMAIN_SUCCESS
+ */
 int allocateHandle(DomainServiceHandle **handle) {
   *handle = malloc(sizeof(DomainServiceHandle));
   if (*handle == NULL) {
@@ -48,6 +53,14 @@ int allocateHandle(DomainServiceHandle **handle) {
   return DOMAIN_SUCCESS;
 }
 
+
+/**
+ * Constructor of a DomainService
+ *
+ * @param options
+ * @param handle
+ * @return
+ */
 int startService(const DomainServiceOpts options, DomainServiceHandle **handle) {
   if (allocateHandle(handle) == DOMAIN_INIT_FAILURE) {
     return DOMAIN_INIT_FAILURE;
@@ -79,6 +92,11 @@ int startService(const DomainServiceOpts options, DomainServiceHandle **handle) 
   return DOMAIN_SUCCESS;
 }
 
+/**
+ *
+ * @param handle
+ * @return
+ */
 int stopService(DomainServiceHandle **handle) {
   if (handle != NULL && *handle != NULL && (*handle)->domainService != NULL) {
     if ((*handle)->domainService->sock >= 0) {
@@ -93,6 +111,13 @@ int stopService(DomainServiceHandle **handle) {
   return DOMAIN_SUCCESS;
 }
 
+/**
+ *
+ * @param handle
+ * @param message
+ * @param hostAddr
+ * @return
+ */
 int toDomainHost(DomainServiceHandle *handle, void *message, struct sockaddr_in *hostAddr) {
   char *buf = malloc(handle->domainService->outgoingSerializer.messageSize);
   const DomainService *service = handle->domainService;
@@ -111,6 +136,13 @@ int toDomainHost(DomainServiceHandle *handle, void *message, struct sockaddr_in 
   return status;
 }
 
+/**
+ *
+ * @param handle
+ * @param message
+ * @param hostAddr
+ * @return
+ */
 int fromDomainHost(DomainServiceHandle *handle, void *message, struct sockaddr_in *hostAddr) {
   char *buf = malloc(handle->domainService->incomingDeserializer.messageSize);
   if (!buf) {
@@ -133,8 +165,6 @@ int fromDomainHost(DomainServiceHandle *handle, void *message, struct sockaddr_i
 }
 
 /**
- *
- *
  * FIXME should probably go into UDP?
  * @param handle
  * @param timeoutMs

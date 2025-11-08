@@ -14,6 +14,13 @@
 #define TIMEOUT_SECONDS 0
 #define SOCK_FAILURE (-1)
 
+/**
+ * Gets a UDP socket
+ *
+ * @param address
+ * @param timeout
+ * @return
+ */
 int getSocket(const struct sockaddr_in *address, const struct timeval *timeout) {
   const int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if (sock < 0) {
@@ -39,6 +46,12 @@ int getSocket(const struct sockaddr_in *address, const struct timeval *timeout) 
   return sock;
 }
 
+/**
+ * Gets a network address from an ASCII IP address and a port
+ * @param ipAddress
+ * @param serverPort
+ * @return
+ */
 struct sockaddr_in getNetworkAddress(const char *ipAddress, const unsigned short serverPort) {
   struct sockaddr_in addr;
   memset(&addr, 0, sizeof(addr));
@@ -52,6 +65,15 @@ struct sockaddr_in getNetworkAddress(const char *ipAddress, const unsigned short
   return addr;
 }
 
+/**
+ * Receives a message from a given socket
+ *
+ * @param socket
+ * @param message
+ * @param messageSize
+ * @param clientAddress
+ * @return
+ */
 int receiveMessage(const int socket, char *message, const size_t messageSize, struct sockaddr_in *clientAddress) {
   socklen_t clientAddrLen = sizeof(*clientAddress);
   const ssize_t numBytes = recvfrom(socket, message, messageSize, 0,
@@ -74,6 +96,15 @@ int receiveMessage(const int socket, char *message, const size_t messageSize, st
   return SUCCESS;
 }
 
+/**
+ * Sends a message on a given socket
+ *
+ * @param socket
+ * @param messageBuffer
+ * @param messageSize
+ * @param destinationAddress
+ * @return
+ */
 int sendMessage(const int socket, const char *messageBuffer, const size_t messageSize,
                 const struct sockaddr_in *destinationAddress) {
   const ssize_t numBytes = sendto(socket, messageBuffer, messageSize, 0, (struct sockaddr *) destinationAddress,

@@ -23,6 +23,12 @@ static DomainServiceHandle *pkeDomain = NULL;
 static DomainServiceHandle *tfaDomain = NULL;
 static struct sockaddr_in pkServerAddr;
 
+
+/**
+ * Giant main function for TFA Server. TODO break into smaller functions
+ * Fulfills all of Req 3.
+ * @return nothing, loops forever and ever
+ */
 int main() {
     // initialize domains
     initPKEClientDomain(&pkeDomain);
@@ -42,6 +48,7 @@ int main() {
         if (receivedMessage.messageType == registerTFA) {
             unsigned int publicKey;
             getPublicKey(pkeDomain, &pkServerAddr, receivedMessage.userID, &publicKey);
+            printf("Req 1. a. 2) a) and b) - sent requestPublicKey and got responsePublicKey\n");
 
             // GOT PUBLIC KEY, NOW AUTHENTICATE
             const unsigned long digitalSig = receivedMessage.digitalSig;
@@ -49,9 +56,11 @@ int main() {
             const unsigned long decryptedTimesstamp = decryptTimestamp(digitalSig, publicKey, MODULUS);
             if (decryptedTimesstamp != timestamp) {
                 printf("Authentication failed! Aborting TFA client registration...\n");
+                // rely on client timing out...
                 continue;
             }
-            printf("Authentication succeeded! Continuing with TFA client registration!\n");
+            printf("Req C. 1. a. 1) Authentication succeeded! Continuing with TFA client registration!\n");
+            printf("Please note that C. 1. a. 2) must take place first (retrieve publicKey).\n");
 
             // WE AUTHENTICATED! SEND SUCCESS MESSAGE TO CLIENT
             TFAServerToTFAClient registrationSuccessMessage = {
@@ -66,6 +75,8 @@ int main() {
                 continue;
             }
 
+            printf("Req C 1. a. 2) b. (repeated) sent confirmTFA\n");
+
             // RECEIVE ACK MESSAGE OF DESTINY
             int receivedSuccess = fromDomainHost(tfaDomain, &receivedMessage, &clientAddress);
 
@@ -78,16 +89,17 @@ int main() {
                 printf("Did not receive expected ack register message, aborting registration...\n");
                 continue;
             }
-            printf("Received expected ack register message! Finishing registration.\n");
+            printf("Req C 1. a. 2) c. Received expected ack register message! Finishing registration.\n");
 
             // REGISTER CLIENT
             addIP(receivedMessage.userID, clientAddress.sin_addr, ntohs(clientAddress.sin_port));
-            printf("Registered client! Sending TFA confirmation message!\n");
+            printf("Registered client! Sending final TFA confirmation message! (not in reqs)\n");
             sendSuccess = toDomainHost(tfaDomain, &registrationSuccessMessage, &clientAddress);
             if (sendSuccess == ERROR) {
-                printf("Error while sending final ack message for client registration.\n");
+                printf("Warning: error while sending final ack message for client registration.\n");
             }
         } else if (receivedMessage.messageType == requestAuth) {
+            printf("Req C. 2. a. received requestAuth message\n");
             struct in_addr registeredAddress;
             unsigned short port;
             if (getIP(receivedMessage.userID, &registeredAddress, &port) == ERROR) {
@@ -112,6 +124,7 @@ int main() {
                 printf("Failed to send push auth request to TFA client, aborting...\n");
                 continue;
             }
+            printf("Req C. 3. a. sent pushTFA message\n");
 
             TFAClientOrLodiServerToTFAServer pushResponse;
             int receivedSuccess = fromDomainHost(tfaDomain, &pushResponse, &tfaClientAddr);
@@ -124,6 +137,7 @@ int main() {
                 printf("Did not receive expected ack push message, aborting push auth...\n");
                 continue;
             }
+            printf("Req C. 3. b. received ackPushTFA message\n");
 
             TFAServerToLodiServer pushNotificationResponse = {
                 responseAuth,
@@ -133,6 +147,7 @@ int main() {
             if (sendSuccess == ERROR) {
                 printf("Error while sending push response to Lodi server\n");
             }
+            printf("Req C. 2. .b sent responseAuth message\n");
         }
     }
 }

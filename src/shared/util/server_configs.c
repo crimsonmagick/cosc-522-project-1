@@ -3,11 +3,10 @@
  * are not configured as environment variables.
  */
 
-#include "util/server_configs.h"
-
 #include <stdlib.h>
 
 #include "messaging/udp.h"
+#include "util/server_configs.h"
 
 #define LOCALHOST "127.0.0.1"
 
@@ -32,6 +31,11 @@ static char *SERVER_DEFAULT_PORTS[] = {
   "9094"
 };
 
+/**
+ * Gets human-readable server config
+ * @param server
+ * @return
+ */
 ServerConfig getServerConfig(const enum Server server) {
   char *address = getenv(SERVER_ADDRESS_KEYS[server]);
   char *port = getenv(SERVER_PORT_KEYS[server]);
@@ -47,6 +51,11 @@ ServerConfig getServerConfig(const enum Server server) {
   };
 }
 
+/**
+ * Gets socket address for a given server
+ * @param server
+ * @return
+ */
 struct sockaddr_in getServerAddr(const enum Server server) {
   char *address = getenv(SERVER_ADDRESS_KEYS[server]);
   char *port = getenv(SERVER_PORT_KEYS[server]);

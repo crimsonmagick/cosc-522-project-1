@@ -4,7 +4,13 @@
 
 #include "util/rsa.h"
 
-// adapted from https://en.wikipedia.org/wiki/Euclidean_algorithm
+/**
+ * Adapted from https://en.wikipedia.org/wiki/Euclidean_algorithm
+ * Calculates the GCD between two longs
+ * @param a
+ * @param b
+ * @return
+ */
 unsigned long gcd(unsigned long a, unsigned long b) {
     while (b != 0) {
         const unsigned long temp = b;
@@ -14,7 +20,14 @@ unsigned long gcd(unsigned long a, unsigned long b) {
     return a;
 }
 
-// adapted from https://rosettacode.org/wiki/Modular_inverse#C
+/**
+*  Adapted from https://rosettacode.org/wiki/Modular_inverse#C
+*  Computes the modular multiplicative inverse of `a` under modulus `m`
+*
+ * @param a The number to find the modular inverse of.
+ * @param m The modulus
+ * @return The modular inverse
+ */
 unsigned long modInverse(unsigned long a, unsigned long m) {
     long m0 = (long) m;
     long x0 = 0, x1 = 1;
@@ -41,6 +54,13 @@ unsigned long modInverse(unsigned long a, unsigned long m) {
     return (unsigned long) x1;
 }
 
+/**
+ * Generates a public key/private key pair with a modulus
+ *
+ * @param p
+ * @param q
+ * @return
+ */
 KeyGenResult generateKeys(const unsigned int p, const unsigned int q) {
     unsigned long n = (unsigned long) p * (unsigned long) q;
     unsigned long phiResult = (unsigned long) (p - 1) * (unsigned long) (q - 1);
@@ -58,7 +78,15 @@ KeyGenResult generateKeys(const unsigned int p, const unsigned int q) {
     return result;
 }
 
-// Based on https://en.wikipedia.org/wiki/Modular_exponentiation
+/**
+ * Based on https://en.wikipedia.org/wiki/Modular_exponentiation
+ * Takes the modules of the base exponentiation by the exponent.
+ *
+ * @param base
+ * @param exponent
+ * @param modulus
+ * @return
+ */
 unsigned long modPow(unsigned long base, unsigned long exponent, unsigned long modulus) {
     if (modulus == 1) {
         return 0;
@@ -76,10 +104,24 @@ unsigned long modPow(unsigned long base, unsigned long exponent, unsigned long m
     return result;
 }
 
+/**
+ * Encrypts a timestamp with a private key and modulus
+ * @param timestamp
+ * @param privateKey
+ * @param modulus
+ * @return
+ */
 unsigned long encryptTimestamp(unsigned long timestamp, unsigned long privateKey, unsigned long modulus) {
     return modPow(timestamp, privateKey, modulus);
 }
 
+/**
+ * Decrypts a timestamp with a public key and moduls
+ * @param encrypted
+ * @param publicKey
+ * @param modulus
+ * @return
+ */
 unsigned long decryptTimestamp(unsigned long encrypted, unsigned long publicKey, unsigned long modulus) {
     return modPow(encrypted, publicKey, modulus);
 }

@@ -16,11 +16,22 @@ struct in_addr *addressStore[SIZE];
 
 unsigned short portStore[SIZE];
 
+/**
+ *  Constructor
+ */
 void initRepository() {
   memset(addressStore, 0, SIZE * sizeof(struct in_addr));
   memset(portStore, 0, SIZE * sizeof(unsigned short));
 }
 
+/**
+ * Registers the IP and Port
+ *
+ * @param userId
+ * @param clientAddress
+ * @param clientPort
+ * @return
+ */
 int addIP(unsigned int userId, struct in_addr clientAddress, unsigned short clientPort) {
   const unsigned int idx = userId % SIZE;
   portStore[idx] = clientPort;
@@ -31,6 +42,14 @@ int addIP(unsigned int userId, struct in_addr clientAddress, unsigned short clie
   return SUCCESS;
 }
 
+/**
+ * Gets the IP and port
+ *
+ * @param userId
+ * @param clientAddress
+ * @param clientPort
+ * @return
+ */
 int getIP(unsigned int userId, struct in_addr *clientAddress, unsigned short *clientPort) {
   const unsigned int idx = userId % SIZE;
   if (addressStore[idx] == 0 || portStore[idx] == 0) {
