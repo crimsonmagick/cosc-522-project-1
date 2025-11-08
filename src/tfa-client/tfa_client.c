@@ -39,7 +39,7 @@ static struct sockaddr_in tfaServerAddr;
 
 int main() {
     initTFAClientDomain(&tfaDomain,true);
-    tfaServerAddr = getServerAddr(TFA_CLIENT);
+    tfaServerAddr = getServerAddr(TFA);
 
     printf("Welcome to the TFA Client!\n");
     unsigned int userID = getLongInput("user ID");
@@ -50,8 +50,11 @@ int main() {
     time(&timestamp);
     digitalSignature = encryptTimestamp(timestamp, privateKey, MODULUS);
 
-    registerTFAClient(userID, timestamp, digitalSignature);
+    int registerStatus = registerTFAClient(userID, timestamp, digitalSignature);
     stopService(&tfaDomain); //TODO remove
+    if (registerStatus == ERROR) {
+        exit(1);
+    }
 
     while (true) {
         handleTFAPush();
@@ -136,11 +139,12 @@ int registerTFAClient(const unsigned int userID, unsigned long timestamp, unsign
         return ERROR;
     }
 
-    const TFAServerToTFAClient response;
+    TFAServerToTFAClient response;
     struct sockaddr_in clientAddr;
     int receiveStatus = fromDomainHost(tfaDomain, &response, &clientAddr);
     if (receiveStatus == DOMAIN_FAILURE) {
         printf("Failed to receive registration, aborting registration...\n");
+        return ERROR;
     }
     printf("TFA registration successful! Received: messageType=%u, userID=%u\n",
            response.messageType, response.userID);
