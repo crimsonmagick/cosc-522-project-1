@@ -56,7 +56,7 @@ int startService(const DomainServiceOpts options, DomainServiceHandle **handle) 
   }
   DomainService *domainService = (*handle)->domainService;
   struct timeval *timeout = NULL;
-  if (options.timeoutMs != 0) {
+  if (options.timeoutMs > 0) {
     timeout = malloc(sizeof(struct timeval));
     const long timeoutS = options.timeoutMs / 1000;
     const long timeoutUs = options.timeoutMs % 1000 * 1000;
@@ -132,4 +132,23 @@ int fromDomainHost(DomainServiceHandle *handle, void *message, struct sockaddr_i
   }
   free(buf);
   return status;
+}
+
+int changeTimeout(DomainServiceHandle *handle, int timeoutMs) {
+  struct timeval timeout;
+
+  if (timeoutMs > 0) {
+    timeout.tv_sec  = timeoutMs / 1000;
+    timeout.tv_usec = (timeoutMs % 1000) * 1000;
+  } else {
+    timeout.tv_sec  = 0;
+    timeout.tv_usec = 0;
+  }
+
+  if (setsockopt(handle->domainService->sock, SOL_SOCKET, SO_RCVTIMEO,
+                 &timeout, sizeof(timeout)) < 0) {
+    return DOMAIN_FAILURE;
+                 }
+
+  return DOMAIN_SUCCESS;
 }

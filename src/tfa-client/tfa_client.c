@@ -15,7 +15,6 @@
 
 #include "domain.h"
 #include "messaging/tfa_messaging.h"
-#include "messaging/udp.h"
 #include "shared.h"
 #include "util/rsa.h"
 #include "util/server_configs.h"
@@ -34,11 +33,11 @@ int lodiLogin(unsigned int userID, long timestamp, long digitalSignature);
 
 int handleTFAPush();
 
-static DomainServiceHandle *tfaDomain = NULL;
+static DomainServiceHandle *tfaClientDomain = NULL;
 static struct sockaddr_in tfaServerAddr;
 
 int main() {
-    initTFAClientDomain(&tfaDomain,true);
+    initTFAClientDomain(&tfaClientDomain,true);
     tfaServerAddr = getServerAddr(TFA);
 
     printf("Welcome to the TFA Client!\n");
@@ -51,7 +50,6 @@ int main() {
     digitalSignature = encryptTimestamp(timestamp, privateKey, MODULUS);
 
     int registerStatus = registerTFAClient(userID, timestamp, digitalSignature);
-    stopService(&tfaDomain); //TODO remove
     if (registerStatus == ERROR) {
         exit(1);
     }
@@ -81,46 +79,34 @@ unsigned long getLongInput(char *inputName) {
 }
 
 int handleTFAPush() {
-    const unsigned short serverPort = atoi(getServerConfig(TFA_CLIENT).port);
-
-    const int serverSocket = getServerSocket(serverPort, NULL);
-
-    if (serverSocket < 0) {
-        printf("Unable to create socket\n");
-        exit(EXIT_FAILURE);
-    }
-
     while (true) {
         struct sockaddr_in clientAddress;
 
-        char receivedBuffer[TFA_SERVER_RESPONSE_SIZE];
-        const int receivedSuccess = receiveMessage(serverSocket, receivedBuffer, TFA_SERVER_RESPONSE_SIZE,
-                                                   &clientAddress);
+        TFAServerToTFAClient pushRequest;
+
+        changeTimeout(tfaClientDomain, 0); // block
+        int receivedSuccess = fromDomainHost(tfaClientDomain, &pushRequest, &clientAddress);
 
         if (receivedSuccess == ERROR) {
             printf("Failed to handle incoming TFAClientOrLodiServerToTFAServer message.\n");
             continue;
         }
 
-        TFAServerToTFAClient *receivedMessage = deserializeTFAServerResponse(receivedBuffer, TFA_SERVER_RESPONSE_SIZE);
-
         TFAClientOrLodiServerToTFAServer toSendMessage = {
             .messageType = ackPushTFA,
-            .userID = receivedMessage->userID,
+            .userID = pushRequest.userID,
             .timestamp = 0,
             .digitalSig = 0
         };
+        changeTimeout(tfaClientDomain, DEFAULT_TIMEOUT_MS); // timeout on send
 
-        char *sendBuffer = serializeTFAClientRequest(&toSendMessage);
+        int sendStatus = toDomainHost(tfaClientDomain, &toSendMessage, &tfaServerAddr);
 
-        const int sendSuccess = sendMessage(serverSocket, sendBuffer, TFA_CLIENT_REQUEST_SIZE, &clientAddress);
-        if (sendSuccess == ERROR) {
-            printf("Error while sending message.\n");
+        if (sendStatus == ERROR) {
+            printf("Error while sending push ack.\n");
+        } else {
+            printf("Responded to push auth request successfully!\n");
         }
-
-        free(sendBuffer);
-        free(receivedMessage);
-        printf("Responded to push auth request successfully!\n");
     }
 }
 
@@ -132,7 +118,7 @@ int registerTFAClient(const unsigned int userID, unsigned long timestamp, unsign
         .digitalSig = digitalSignature
     };
 
-    int sendStatus = toDomainHost(tfaDomain, &requestMessage, &tfaServerAddr);
+    int sendStatus = toDomainHost(tfaClientDomain, &requestMessage, &tfaServerAddr);
 
     if (sendStatus == DOMAIN_FAILURE) {
         printf("Failed to send registration, aborting registration...\n");
@@ -141,22 +127,32 @@ int registerTFAClient(const unsigned int userID, unsigned long timestamp, unsign
 
     TFAServerToTFAClient response;
     struct sockaddr_in clientAddr;
-    int receiveStatus = fromDomainHost(tfaDomain, &response, &clientAddr);
+    int receiveStatus = fromDomainHost(tfaClientDomain, &response, &clientAddr);
     if (receiveStatus == DOMAIN_FAILURE) {
         printf("Failed to receive registration, aborting registration...\n");
         return ERROR;
     }
-    printf("TFA registration successful! Received: messageType=%u, userID=%u\n",
+    printf("TFA registration request was received! Client got back: messageType=%u, userID=%u\n",
            response.messageType, response.userID);
 
     // AS PER REQUIREMENTS, SEND CONFIRMATION AGAIN
     requestMessage.messageType = ackRegTFA;
-    sendStatus = toDomainHost(tfaDomain, &requestMessage, &tfaServerAddr);
-
+    sendStatus = toDomainHost(tfaClientDomain, &requestMessage, &tfaServerAddr);
     if (sendStatus == ERROR) {
-        printf("Key registration failed in final step...\n");
+        printf("Key registration failed while sending ack...\n");
+        return ERROR;
     } else {
-        printf("Key registration successful!\n");
+        printf("Key registration ack sent successful!\n");
     }
+
+    receiveStatus = fromDomainHost(tfaClientDomain, &response, &clientAddr);
+    if (receiveStatus == DOMAIN_FAILURE) {
+        printf("Failed to receive final registration confirmation, aborting registration...\n");
+        return ERROR;
+    }
+
+    printf("TFA registration successful and finally complete! Received: messageType=%u, userID=%u\n",
+       response.messageType, response.userID);
+
     return sendStatus;
 }

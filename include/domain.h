@@ -51,5 +51,8 @@ int toDomainHost(DomainServiceHandle *handle, void *message, struct sockaddr_in 
 
 int fromDomainHost(DomainServiceHandle *handle, void *message, struct sockaddr_in *hostAddr);
 
+int changeTimeout(DomainServiceHandle *handle, int timeoutMs);
+
+
 
 #endif
