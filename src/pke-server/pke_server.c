@@ -19,7 +19,6 @@
 static DomainServiceHandle *pkeDomain = NULL;
 
 int main() {
-
   initPKEServerDomain(&pkeDomain);
   init();
 
@@ -40,6 +39,7 @@ int main() {
       addKey(receivedMessage.userID, receivedMessage.publicKey);
       responseMessage.messageType = ackRegisterKey;
       responseMessage.publicKey = receivedMessage.publicKey;
+      printf("Added publicKey=%u for userId=%u\n", responseMessage.publicKey, responseMessage.userID);
     } else if (receivedMessage.messageType == requestKey) {
       unsigned int publicKey;
       if (getKey(receivedMessage.userID, &publicKey) == ERROR) {

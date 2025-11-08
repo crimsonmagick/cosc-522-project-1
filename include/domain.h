@@ -14,6 +14,8 @@
 #define DOMAIN_FAILURE 1
 #define DOMAIN_INIT_FAILURE 2
 
+#define DEFAULT_TIMEOUT_MS 100
+
 typedef struct DomainService DomainService;
 
 typedef struct DomainServiceHandle {
@@ -35,7 +37,7 @@ typedef struct MessageDeserializer {
 
 typedef struct DomainServiceOpts {
   char *localPort;
-  unsigned int *timeoutMs;
+  int timeoutMs;
   MessageSerializer outgoingSerializer;
   MessageDeserializer incomingDeserializer;
 } DomainServiceOpts;

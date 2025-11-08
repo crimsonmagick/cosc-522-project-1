@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "shared.h"
@@ -54,17 +55,22 @@ int startService(const DomainServiceOpts options, DomainServiceHandle **handle) 
     return DOMAIN_INIT_FAILURE;
   }
   DomainService *domainService = (*handle)->domainService;
-  // const long timeoutMs = options.timeoutMs == NULL ? DEFAULT_TIMEOUT_MS : *options.timeoutMs;
-  // const long timeoutS = timeoutMs / 1000;
-  // const long timeoutUs = timeoutMs % 1000 * 1000;
-  // const struct timeval timeout = {.tv_sec = timeoutS, .tv_usec = timeoutUs};
+  struct timeval *timeout = NULL;
+  if (options.timeoutMs != 0) {
+    timeout = malloc(sizeof(struct timeval));
+    const long timeoutS = options.timeoutMs / 1000;
+    const long timeoutUs = options.timeoutMs % 1000 * 1000;
+    const struct timeval temp = {.tv_sec = timeoutS, .tv_usec = timeoutUs};
+    *timeout = temp;
+  }
   if (options.localPort != 0) {
     domainService->localAddr = getNetworkAddress(LOCALHOST, atoi(options.localPort));
-    // domainService->sock = getSocket(&domainService->hostAddr, &timeout);
-    domainService->sock = getSocket(&domainService->localAddr, NULL);
+    domainService->sock = getSocket(&domainService->localAddr, timeout);
   } else {
-    // domainService->sock = getSocket(NULL, &timeout);
-    domainService->sock = getSocket(NULL, NULL);
+    domainService->sock = getSocket(NULL, timeout);
+  }
+  if (timeout != NULL) {
+    free(timeout);
   }
   if (domainService->sock < 0) {
     return failInit(handle);

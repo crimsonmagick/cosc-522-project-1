@@ -32,12 +32,4 @@ int initPKEServerDomain(DomainServiceHandle **handle);
 int getPublicKey(DomainServiceHandle * handle, struct sockaddr_in *pkeAddr, const unsigned int userID,
   unsigned int *publicKey);
 
-char *serializePKClientRequest(const PClientToPKServer *toSerialize);
-
-PClientToPKServer *deserializePKClientRequest(const char *serialized, const size_t size);
-
-char *serializePKServerResponse(const PKServerToLodiClient *toSerialize);
-
-PKServerToLodiClient *deserializePKServerResponse(const char *serialized, const size_t size);
-
-#endif //COSC522_LODI_PKEMESSAGING_H
+#endif

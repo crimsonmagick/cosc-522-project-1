@@ -88,7 +88,7 @@ int initPKEClientDomain(DomainServiceHandle **handle) {
   };
   const DomainServiceOpts options = {
     .localPort = 0,
-    .timeoutMs = NULL,
+    .timeoutMs = DEFAULT_TIMEOUT_MS,
     .outgoingSerializer = outgoing,
     .incomingDeserializer = incoming
   };
@@ -113,7 +113,7 @@ int initPKEServerDomain(DomainServiceHandle **handle) {
   };
   const DomainServiceOpts options = {
     .localPort = serverConfig.port,
-    .timeoutMs = NULL,
+    .timeoutMs = 0,
     .outgoingSerializer = outgoing,
     .incomingDeserializer = incoming
   };
@@ -124,70 +124,4 @@ int initPKEServerDomain(DomainServiceHandle **handle) {
   }
   *handle = allocatedHandle;
   return SUCCESS;
-}
-
-char *serializePKClientRequest(const PClientToPKServer *toSerialize) {
-  char *serialized = malloc(PK_CLIENT_REQUEST_SIZE);
-  if (!serialized) {
-    return NULL;
-  }
-
-  size_t offset = 0;
-  appendUint32(serialized, &offset, toSerialize->messageType);
-  appendUint32(serialized, &offset, toSerialize->userID);
-  appendUint32(serialized, &offset, toSerialize->publicKey);
-
-  return serialized;
-}
-
-PClientToPKServer *deserializePKClientRequest(const char *serialized, const size_t size) {
-  // validate buffer/serialized size
-  if (size < PK_CLIENT_REQUEST_SIZE) {
-    return NULL;
-  }
-
-  PClientToPKServer *deserialized = malloc(sizeof(*deserialized));
-  if (!deserialized) {
-    return NULL;
-  }
-
-  size_t offset = 0;
-  deserialized->messageType = getUint32(serialized, &offset);
-  deserialized->userID = getUint32(serialized, &offset);
-  deserialized->publicKey = getUint32(serialized, &offset);
-
-  return deserialized;
-}
-
-char *serializePKServerResponse(const PKServerToLodiClient *toSerialize) {
-  char *serialized = malloc(PK_SERVER_RESPONSE_SIZE);
-  if (!serialized) {
-    return NULL;
-  }
-
-  size_t offset = 0;
-  appendUint32(serialized, &offset, toSerialize->messageType);
-  appendUint32(serialized, &offset, toSerialize->userID);
-  appendUint32(serialized, &offset, toSerialize->publicKey);
-
-  return serialized;
-}
-
-PKServerToLodiClient *deserializePKServerResponse(const char *serialized, const size_t size) {
-  // validate buffer/serialized size
-  if (size < PK_SERVER_RESPONSE_SIZE) {
-    return NULL;
-  }
-
-  PKServerToLodiClient *deserialized = malloc(sizeof(*deserialized));
-  if (!deserialized) {
-    return NULL;
-  }
-
-  size_t offset = 0;
-  deserialized->messageType = getUint32(serialized, &offset);
-  deserialized->userID = getUint32(serialized, &offset);
-  deserialized->publicKey = getUint32(serialized, &offset);
-
-  return deserialized;
 }
