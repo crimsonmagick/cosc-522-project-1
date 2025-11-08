@@ -13,47 +13,37 @@
 #include <stdbool.h>
 
 #include "messaging/pke_messaging.h"
-#include "messaging/udp.h"
 #include "key_repository.h"
 #include "shared.h"
-#include "util/server_configs.h"
 
+static DomainServiceHandle *pkeDomain = NULL;
 
 int main() {
-  const unsigned short serverPort = atoi(getServerConfig(PK).port);
 
+  initPKEServerDomain(&pkeDomain);
   init();
-
-  const int serverSocket = getServerSocket(serverPort, NULL);
-  if (serverSocket < 0) {
-    printf("Unable to create socket\n");
-    exit(EXIT_FAILURE);
-  }
 
   while (true) {
     struct sockaddr_in clientAddress;
-
-    char receivedBuffer[PK_CLIENT_REQUEST_SIZE];
-    const int receivedSuccess = receiveMessage(serverSocket, receivedBuffer, PK_CLIENT_REQUEST_SIZE, &clientAddress);
+    PKServerToLodiClient receivedMessage;
+    const int receivedSuccess = fromDomainHost(pkeDomain, &receivedMessage, &clientAddress);
 
     if (receivedSuccess == ERROR) {
       printf("Failed to handle incoming PClientToPKServer message.\n");
       continue;
     }
-
-    PClientToPKServer *receivedMessage = deserializePKClientRequest(receivedBuffer, PK_CLIENT_REQUEST_SIZE);
     PKServerToPClientOrLodiServer responseMessage = {
-      .userID = receivedMessage->userID,
+      .userID = receivedMessage.userID,
     };
 
-    if (receivedMessage->messageType == registerKey) {
-      addKey(receivedMessage->userID, receivedMessage->publicKey);
+    if (receivedMessage.messageType == registerKey) {
+      addKey(receivedMessage.userID, receivedMessage.publicKey);
       responseMessage.messageType = ackRegisterKey;
-      responseMessage.publicKey = receivedMessage->publicKey;
-    } else if (receivedMessage->messageType == requestKey) {
+      responseMessage.publicKey = receivedMessage.publicKey;
+    } else if (receivedMessage.messageType == requestKey) {
       unsigned int publicKey;
-      if (getKey(receivedMessage->userID, &publicKey) == ERROR) {
-        printf("publicKey=%u not found.\n", receivedMessage->publicKey);
+      if (getKey(receivedMessage.userID, &publicKey) == ERROR) {
+        printf("publicKey=%u not found.\n", receivedMessage.publicKey);
       } else {
         responseMessage.publicKey = publicKey;
       }
@@ -62,14 +52,9 @@ int main() {
       printf("Received message with unknown message type.\n");
     }
 
-    char *sendBuffer = serializePKServerResponse(&responseMessage);
-
-    const int sendSuccess = sendMessage(serverSocket, sendBuffer, PK_SERVER_RESPONSE_SIZE, &clientAddress);
+    const int sendSuccess = toDomainHost(pkeDomain, &responseMessage, &clientAddress);
     if (sendSuccess == ERROR) {
       printf("Error while sending message.\n");
     }
-
-    free(sendBuffer);
-    free(receivedMessage);
   }
 }
