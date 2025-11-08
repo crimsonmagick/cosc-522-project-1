@@ -9,7 +9,79 @@
 #include <string.h>
 
 #include "messaging/tfa_messaging.h"
+
+#include <stdbool.h>
+
+#include "domain.h"
+#include "shared.h"
 #include "util/buffers.h"
+#include "util/server_configs.h"
+
+
+int serializeClientTFA(TFAClientOrLodiServerToTFAServer *toSerialize, char *serialized) {
+  size_t offset = 0;
+  appendUint32(serialized, &offset, toSerialize->messageType);
+  appendUint32(serialized, &offset, toSerialize->userID);
+  appendUint64(serialized, &offset, toSerialize->timestamp);
+  appendUint64(serialized, &offset, toSerialize->digitalSig);
+
+  return MESSAGE_SERIALIZER_SUCCESS;
+}
+
+int serializeServerTFA(TFAServerToTFAClient *toSerialize, char *serialized) {
+  size_t offset = 0;
+  appendUint32(serialized, &offset, toSerialize->messageType);
+  appendUint32(serialized, &offset, toSerialize->userID);
+
+  return MESSAGE_SERIALIZER_SUCCESS;
+}
+
+int deserializeClientTFA(char *serialized, TFAClientOrLodiServerToTFAServer *deserialized) {
+  size_t offset = 0;
+  deserialized->messageType = getUint32(serialized, &offset);
+  deserialized->userID = getUint32(serialized, &offset);
+  deserialized->timestamp = getUint64(serialized, &offset);
+  deserialized->digitalSig = getUint64(serialized, &offset);
+
+  return MESSAGE_DESERIALIZER_SUCCESS;
+}
+
+int deserializeServerTFA(char *serialized, TFAServerToLodiServer *deserialized) {
+  size_t offset = 0;
+  deserialized->messageType = getUint32(serialized, &offset);
+  deserialized->userID = getUint32(serialized, &offset);
+
+  return MESSAGE_DESERIALIZER_SUCCESS;
+}
+
+int initTFAClientDomain(DomainServiceHandle **handle, const bool isDuplex) {
+  const MessageSerializer outgoing = {
+    TFA_CLIENT_REQUEST_SIZE,
+    .serializer = (int (*)(void *, char *))serializeClientTFA
+  };
+  const MessageDeserializer incoming = {
+    TFA_SERVER_RESPONSE_SIZE,
+    .deserializer = (int (*)(char *, void *)) deserializeServerTFA
+  };
+  char * port = NULL;
+  if (isDuplex) {
+    const ServerConfig server_config = getServerConfig(TFA_CLIENT);
+    port = server_config.port;
+  }
+  const DomainServiceOpts options = {
+    .localPort = port,
+    .timeoutMs = DEFAULT_TIMEOUT_MS,
+    .outgoingSerializer = outgoing,
+    .incomingDeserializer = incoming
+  };
+
+  DomainServiceHandle *allocatedHandle = NULL;
+  if (startService(options, &allocatedHandle) != DOMAIN_SUCCESS) {
+    return ERROR;
+  }
+  *handle = allocatedHandle;
+  return SUCCESS;
+}
 
 char *serializeTFAServerLodiResponse(const TFAServerToLodiServer *toSerialize) {
   char *serialized = malloc(TFA_SERVER_RESPONSE_SIZE);

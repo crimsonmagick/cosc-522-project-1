@@ -16,6 +16,7 @@
 
 #define DEFAULT_TIMEOUT_MS 100
 
+#include <netinet/in.h>
 typedef struct DomainService DomainService;
 
 typedef struct DomainServiceHandle {

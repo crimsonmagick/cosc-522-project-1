@@ -25,7 +25,7 @@ static struct sockaddr_in pkServerAddr;
 
 int main() {
     // initialize domains
-    initPKEClientDomain(&pkeDomain);
+    initTFAClientDomain(&pkeDomain);
     pkServerAddr = getServerAddr(PK);
     // initialize repository
     init();

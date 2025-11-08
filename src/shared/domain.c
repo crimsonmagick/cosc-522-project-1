@@ -63,7 +63,7 @@ int startService(const DomainServiceOpts options, DomainServiceHandle **handle) 
     const struct timeval temp = {.tv_sec = timeoutS, .tv_usec = timeoutUs};
     *timeout = temp;
   }
-  if (options.localPort != 0) {
+  if (options.localPort != NULL) {
     domainService->localAddr = getNetworkAddress(LOCALHOST, atoi(options.localPort));
     domainService->sock = getSocket(&domainService->localAddr, timeout);
   } else {
