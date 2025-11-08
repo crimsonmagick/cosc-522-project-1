@@ -14,7 +14,6 @@
 
 #include "messaging/pke_messaging.h"
 #include "messaging/lodi_messaging.h"
-#include "messaging/udp.h"
 #include "shared.h"
 #include "util/rsa.h"
 #include "util/server_configs.h"
@@ -55,7 +54,6 @@ int main() {
         unsigned long privateKey;
         unsigned long timestamp;
         unsigned long digitalSignature;
-        unsigned long decrypted = 0;
         switch (selected) {
             case REGISTER_OPTION:
                 // TODO look into generating public/private key pair either here or as another option

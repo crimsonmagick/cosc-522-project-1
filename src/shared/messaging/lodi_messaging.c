@@ -12,6 +12,7 @@
 
 #include "shared.h"
 #include "util/buffers.h"
+#include "util/server_configs.h"
 
 
 char *serializeLodiServerRequest(const PClientToLodiServer *toSerialize) {
@@ -142,27 +143,27 @@ int initLodiClientDomain(DomainServiceHandle **handle) {
   return SUCCESS;
 }
 
-// int initPKEServerDomain(DomainServiceHandle **handle) {
-//   const ServerConfig serverConfig = getServerConfig(PK);
-//   const MessageSerializer outgoing = {
-//     PK_SERVER_RESPONSE_SIZE,
-//     .serializer = (int (*)(void *, char *)) serializeServerPK
-//   };
-//   const MessageDeserializer incoming = {
-//     PK_CLIENT_REQUEST_SIZE,
-//     .deserializer = (int (*)(char *, void *)) deserializeClientPK
-//   };
-//   const DomainServiceOpts options = {
-//     .localPort = serverConfig.port,
-//     .timeoutMs = 0,
-//     .outgoingSerializer = outgoing,
-//     .incomingDeserializer = incoming
-//   };
-//
-//   DomainServiceHandle *allocatedHandle = NULL;
-//   if (startService(options, &allocatedHandle) != DOMAIN_SUCCESS) {
-//     return ERROR;
-//   }
-//   *handle = allocatedHandle;
-//   return SUCCESS;
-// }
+int initLodiServerDomain(DomainServiceHandle **handle) {
+  const ServerConfig serverConfig = getServerConfig(LODI);
+  const MessageSerializer outgoing = {
+    LODI_SERVER_RESPONSE_SIZE,
+    .serializer = (int (*)(void *, char *)) serializeServerLodi
+  };
+  const MessageDeserializer incoming = {
+    LODI_CLIENT_REQUEST_SIZE,
+    .deserializer = (int (*)(char *, void *)) deserializeClientLodi
+  };
+  const DomainServiceOpts options = {
+    .localPort = serverConfig.port,
+    .timeoutMs = 0,
+    .outgoingSerializer = outgoing,
+    .incomingDeserializer = incoming
+  };
+
+  DomainServiceHandle *allocatedHandle = NULL;
+  if (startService(options, &allocatedHandle) != DOMAIN_SUCCESS) {
+    return ERROR;
+  }
+  *handle = allocatedHandle;
+  return SUCCESS;
+}

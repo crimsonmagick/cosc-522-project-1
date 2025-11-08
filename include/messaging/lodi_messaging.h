@@ -15,7 +15,6 @@ typedef struct {
   unsigned int userID; /* user identifier */
 } LodiServerToLodiClientAcks;
 
-
 typedef struct {
   enum { login } messageType; /* same size as an unsigned int */
   unsigned int userID; /* user identifier */
@@ -26,7 +25,7 @@ typedef struct {
 
 int initLodiClientDomain(DomainServiceHandle **handle);
 
-// int initLodiServerDomain(DomainServiceHandle **handle);
+int initLodiServerDomain(DomainServiceHandle **handle);
 
 char *serializeLodiServerRequest(const PClientToLodiServer *toSerialize);
 

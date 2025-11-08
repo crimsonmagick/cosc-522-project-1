@@ -22,6 +22,8 @@
 
 static DomainServiceHandle *pkeDomain = NULL;
 static struct sockaddr_in pkServerAddress;
+static DomainServiceHandle *lodiDomain= NULL;
+static struct sockaddr_in lodiServerAddress;
 
 int sendPushRequest(const unsigned int userID) {
   const ServerConfig config = getServerConfig(TFA);
@@ -51,46 +53,38 @@ int sendPushRequest(const unsigned int userID) {
 
 int main() {
   initPKEClientDomain(&pkeDomain);
+  initLodiServerDomain(&lodiDomain);
   pkServerAddress = getServerAddr(PK);
-  const unsigned short serverPort = atoi(getServerConfig(LODI).port);
-
-  const int serverSocket = getServerSocket(serverPort, NULL);
-  if (serverSocket < 0) {
-    printf("Unable to create socket\n");
-    exit(EXIT_FAILURE);
-  }
+  lodiServerAddress = getServerAddr(LODI);
 
   while (true) {
     struct sockaddr_in clientAddress;
-
-    char receivedBuffer[LODI_CLIENT_REQUEST_SIZE];
-    const int receivedSuccess = receiveMessage(serverSocket, receivedBuffer, LODI_CLIENT_REQUEST_SIZE, &clientAddress);
+    PClientToLodiServer receivedMessage;
+    int receivedSuccess = fromDomainHost(lodiDomain, &receivedMessage, &clientAddress);
 
     if (receivedSuccess == ERROR) {
       printf("Failed to handle incoming PClientToLodiServer message.\n");
       continue;
     }
 
-    PClientToLodiServer *receivedMessage = deserializeLodiServerRequest(receivedBuffer, LODI_CLIENT_REQUEST_SIZE);
-
     unsigned int publicKey;
     bool authenticated = false;
-    if (getPublicKey(pkeDomain, &pkServerAddress, receivedMessage->userID, &publicKey) == ERROR) {
+    if (getPublicKey(pkeDomain, &pkServerAddress, receivedMessage.userID, &publicKey) == ERROR) {
       printf("Failed to retrieve public key!\n");
     } else {
-      const unsigned long decrypted = decryptTimestamp(receivedMessage->digitalSig, publicKey, MODULUS);
-      if (decrypted == receivedMessage->timestamp) {
+      const unsigned long decrypted = decryptTimestamp(receivedMessage.digitalSig, publicKey, MODULUS);
+      if (decrypted == receivedMessage.timestamp) {
         authenticated = true;
         printf("Decrypted timestamp successfully! timestamp=%lu \n", decrypted);
       } else {
         printf("Failed to decrypt timestamp! timestamp=%lu, decrypted=%lu \n",
-               receivedMessage->timestamp, decrypted);
+               receivedMessage.timestamp, decrypted);
       }
     }
 
     if (authenticated) {
       printf("Verifying login with TFA...\n");
-      if (sendPushRequest(receivedMessage->userID) == ERROR) {
+      if (sendPushRequest(receivedMessage.userID) == ERROR) {
         printf("Failed to authenticate with push confirmation! Continuing without response...\n");
         continue;
       }
@@ -103,17 +97,12 @@ int main() {
 
     LodiServerToLodiClientAcks toSendMessage = {
       ackLogin,
-      receivedMessage->userID,
+      receivedMessage.userID,
     };
 
-    char *sendBuffer = serializeLodiServerResponse(&toSendMessage);
-
-    const int sendSuccess = sendMessage(serverSocket, sendBuffer, LODI_SERVER_RESPONSE_SIZE, &clientAddress);
+    const int sendSuccess = toDomainHost(lodiDomain, &toSendMessage, &clientAddress);
     if (sendSuccess == ERROR) {
-      printf("Error while sending message.\n");
+      printf("Error while sending Lodi login repsonse.\n");
     }
-
-    free(sendBuffer);
-    free(receivedMessage);
   }
 }
