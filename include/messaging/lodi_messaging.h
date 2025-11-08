@@ -8,6 +8,7 @@
 
 #define LODI_CLIENT_REQUEST_SIZE (3 * sizeof(uint32_t) + 2 * sizeof(uint64_t))
 #define LODI_SERVER_RESPONSE_SIZE (2 * sizeof(uint32_t))
+#include "domain.h"
 
 typedef struct {
   enum { ackLogin } messageType; /* same size as an unsigned int */
@@ -22,6 +23,10 @@ typedef struct {
   unsigned long timestamp; /* timestamp */
   unsigned long digitalSig; /* encrypted timestamp */
 } PClientToLodiServer;
+
+int initLodiClientDomain(DomainServiceHandle **handle);
+
+// int initLodiServerDomain(DomainServiceHandle **handle);
 
 char *serializeLodiServerRequest(const PClientToLodiServer *toSerialize);
 

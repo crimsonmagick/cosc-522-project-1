@@ -24,7 +24,9 @@
 #define QUIT_OPTION 3
 
 static DomainServiceHandle *pkeDomain = NULL;
+static DomainServiceHandle *lodiDomain= NULL;
 static struct sockaddr_in pkServerAddr;
+static struct sockaddr_in lodiServerAddr;
 
 int getMainOption();
 
@@ -37,7 +39,9 @@ int lodiLogin(unsigned int userID, long timestamp, long digitalSignature);
 int main() {
     // initialize domains
     initPKEClientDomain(&pkeDomain);
+    initLodiClientDomain(&lodiDomain);
     pkServerAddr = getServerAddr(PK);
+    lodiServerAddr = getServerAddr(LODI);
 
     printf("Welcome to the Lodi Client!\n");
     unsigned int userID = getLongInput("user ID");
@@ -63,7 +67,6 @@ int main() {
                 privateKey = getLongInput("private key");
                 time(&timestamp);
                 digitalSignature = encryptTimestamp(timestamp, privateKey, MODULUS);
-                decrypted = decryptTimestamp(digitalSignature, publicKey, MODULUS);
                 lodiLogin(userID, timestamp, digitalSignature);
                 break;
             case QUIT_OPTION:
@@ -151,8 +154,7 @@ int registerPublicKey(const unsigned int userID, const unsigned int publicKey) {
 }
 
 int lodiLogin(const unsigned int userID, const long timestamp, const long digitalSignature) {
-    const ServerConfig config = getServerConfig(LODI);
-    const PClientToLodiServer requestMessage = {
+    const PClientToLodiServer request = {
         .messageType = login,
         .userID = userID,
         .recipientID = 0,
@@ -160,21 +162,22 @@ int lodiLogin(const unsigned int userID, const long timestamp, const long digita
         .digitalSig = digitalSignature
     };
 
-    char *requestBuffer = serializeLodiServerRequest(&requestMessage);
-    char responseBuffer[LODI_CLIENT_REQUEST_SIZE];
-    const int sendStatus = synchronousSend(requestBuffer, LODI_CLIENT_REQUEST_SIZE, responseBuffer,
-                                           LODI_SERVER_RESPONSE_SIZE, config.address, atoi(config.port));
-    free(requestBuffer);
-
-    if (sendStatus == ERROR) {
-        printf("Aborting registration...\n");
-    } else {
-        LodiServerToLodiClientAcks *responseDeserialized = deserializeLodiServerResponse(
-            responseBuffer, LODI_SERVER_RESPONSE_SIZE);
-        printf("Login successful! Received: messageType=%u, userID=%u\n",
-               responseDeserialized->messageType, responseDeserialized->userID);
-        free(responseDeserialized);
+    if (toDomainHost(lodiDomain, (void *) &request, &lodiServerAddr) == ERROR) {
+        printf("Failed to send login message, aborting...\n");
+        return ERROR;
     }
+
+    struct sockaddr_in receiveAddress;
+
+    LodiServerToLodiClientAcks response;
+
+    if (fromDomainHost(lodiDomain, &response, &receiveAddress) == DOMAIN_FAILURE) {
+        printf("Failed to receive login message, aborting...\n");
+        return ERROR;
+    }
+
+    printf("Login successful! Received: messageType=%u, userID=%u\n",
+           response.messageType, response.userID);
 
     printf("Please select from our many amazing Lodi options:\n");
 
@@ -186,5 +189,5 @@ int lodiLogin(const unsigned int userID, const long timestamp, const long digita
             printf("Please enter a valid option: 1\n");
         }
     }
-    return sendStatus;
+    return SUCCESS;
 }

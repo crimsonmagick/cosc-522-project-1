@@ -9,6 +9,8 @@
 #include <string.h>
 
 #include "messaging/lodi_messaging.h"
+
+#include "shared.h"
 #include "util/buffers.h"
 
 
@@ -77,3 +79,90 @@ LodiServerToLodiClientAcks *deserializeLodiServerResponse(const char *serialized
 
   return deserialized;
 }
+
+int serializeClientLodi(PClientToLodiServer *toSerialize, char *serialized) {
+  size_t offset = 0;
+  appendUint32(serialized, &offset, toSerialize->messageType);
+  appendUint32(serialized, &offset, toSerialize->userID);
+  appendUint32(serialized, &offset, toSerialize->recipientID);
+  appendUint64(serialized, &offset, toSerialize->timestamp);
+  appendUint64(serialized, &offset, toSerialize->digitalSig);
+
+  return MESSAGE_SERIALIZER_SUCCESS;
+}
+
+int serializeServerLodi(LodiServerToLodiClientAcks *toSerialize, char *serialized) {
+  size_t offset = 0;
+  appendUint32(serialized, &offset, toSerialize->messageType);
+  appendUint32(serialized, &offset, toSerialize->userID);
+
+  return MESSAGE_SERIALIZER_SUCCESS;
+}
+
+int deserializeClientLodi(char *serialized, PClientToLodiServer *deserialized) {
+  size_t offset = 0;
+  deserialized->messageType = getUint32(serialized, &offset);
+  deserialized->userID = getUint32(serialized, &offset);
+  deserialized->recipientID = getUint32(serialized, &offset);
+  deserialized->timestamp = getUint64(serialized, &offset);
+  deserialized->digitalSig = getUint64(serialized, &offset);
+
+  return MESSAGE_DESERIALIZER_SUCCESS;
+}
+
+int deserializeServerLodi(char *serialized, LodiServerToLodiClientAcks *deserialized) {
+  size_t offset = 0;
+  deserialized->messageType = getUint32(serialized, &offset);
+  deserialized->userID = getUint32(serialized, &offset);
+
+  return MESSAGE_DESERIALIZER_SUCCESS;
+}
+
+int initLodiClientDomain(DomainServiceHandle **handle) {
+  const MessageSerializer outgoing = {
+    LODI_CLIENT_REQUEST_SIZE,
+    .serializer = (int (*)(void *, char *)) serializeClientLodi
+  };
+  const MessageDeserializer incoming = {
+    LODI_SERVER_RESPONSE_SIZE,
+    .deserializer = (int (*)(char *, void *)) deserializeServerLodi
+  };
+  const DomainServiceOpts options = {
+    .localPort = 0,
+    .timeoutMs = DEFAULT_TIMEOUT_MS,
+    .outgoingSerializer = outgoing,
+    .incomingDeserializer = incoming
+  };
+
+  DomainServiceHandle *allocatedHandle = NULL;
+  if (startService(options, &allocatedHandle) != DOMAIN_SUCCESS) {
+    return ERROR;
+  }
+  *handle = allocatedHandle;
+  return SUCCESS;
+}
+
+// int initPKEServerDomain(DomainServiceHandle **handle) {
+//   const ServerConfig serverConfig = getServerConfig(PK);
+//   const MessageSerializer outgoing = {
+//     PK_SERVER_RESPONSE_SIZE,
+//     .serializer = (int (*)(void *, char *)) serializeServerPK
+//   };
+//   const MessageDeserializer incoming = {
+//     PK_CLIENT_REQUEST_SIZE,
+//     .deserializer = (int (*)(char *, void *)) deserializeClientPK
+//   };
+//   const DomainServiceOpts options = {
+//     .localPort = serverConfig.port,
+//     .timeoutMs = 0,
+//     .outgoingSerializer = outgoing,
+//     .incomingDeserializer = incoming
+//   };
+//
+//   DomainServiceHandle *allocatedHandle = NULL;
+//   if (startService(options, &allocatedHandle) != DOMAIN_SUCCESS) {
+//     return ERROR;
+//   }
+//   *handle = allocatedHandle;
+//   return SUCCESS;
+// }
