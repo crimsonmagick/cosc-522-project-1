@@ -11,7 +11,7 @@
 
 unsigned int keyStore[SIZE];
 
-void init() {
+void initRepository() {
   memset(keyStore, 0, SIZE * sizeof(unsigned int));
 }
 

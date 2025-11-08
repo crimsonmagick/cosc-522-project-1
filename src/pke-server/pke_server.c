@@ -20,7 +20,7 @@ static DomainServiceHandle *pkeDomain = NULL;
 
 int main() {
   initPKEServerDomain(&pkeDomain);
-  init();
+  initRepository();
 
   while (true) {
     struct sockaddr_in clientAddress;

@@ -4,16 +4,14 @@
  */
 
 #include <arpa/inet.h>
-
-#include "domain.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
 
-#include "shared.h"
+#include "domain.h"
 #include "messaging/udp.h"
+#include "shared.h"
 
 #define DEFAULT_TIMEOUT_MS 100
 
@@ -134,21 +132,29 @@ int fromDomainHost(DomainServiceHandle *handle, void *message, struct sockaddr_i
   return status;
 }
 
+/**
+ *
+ *
+ * FIXME should probably go into UDP?
+ * @param handle
+ * @param timeoutMs
+ * @return
+ */
 int changeTimeout(DomainServiceHandle *handle, int timeoutMs) {
   struct timeval timeout;
 
   if (timeoutMs > 0) {
-    timeout.tv_sec  = timeoutMs / 1000;
-    timeout.tv_usec = (timeoutMs % 1000) * 1000;
+    timeout.tv_sec = timeoutMs / 1000;
+    timeout.tv_usec = timeoutMs % 1000 * 1000;
   } else {
-    timeout.tv_sec  = 0;
+    timeout.tv_sec = 0;
     timeout.tv_usec = 0;
   }
 
   if (setsockopt(handle->domainService->sock, SOL_SOCKET, SO_RCVTIMEO,
                  &timeout, sizeof(timeout)) < 0) {
     return DOMAIN_FAILURE;
-                 }
+  }
 
   return DOMAIN_SUCCESS;
 }

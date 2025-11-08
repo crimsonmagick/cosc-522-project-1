@@ -30,17 +30,6 @@ typedef struct {
 
 int initTFAClientDomain(DomainServiceHandle **handle, bool isDuplex);
 
-char *serializeTFAClientRequest(const TFAClientOrLodiServerToTFAServer *toSerialize);
+int initTFAServerDomain(DomainServiceHandle **handle);
 
-TFAClientOrLodiServerToTFAServer *deserializeTFAClientRequest(const char *serialized, const size_t size);
-
-char *serializeTFAServerResponse(const TFAServerToTFAClient *toSerialize);
-
-TFAServerToTFAClient *deserializeTFAServerResponse(const char *serialized, const size_t size);
-
-char *serializeTFAServerLodiResponse(const TFAServerToLodiServer *toSerialize);
-
-TFAServerToLodiServer *deserializeTFAServerLodiResponse(const char *serialized, const size_t size);
-
-
-#endif //COSC522_LODI_TFAMESSAGING_H
+#endif

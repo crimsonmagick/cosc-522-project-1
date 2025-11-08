@@ -14,23 +14,6 @@
 #include "util/buffers.h"
 #include "util/server_configs.h"
 
-LodiServerToLodiClientAcks *deserializeLodiServerResponse(const char *serialized, const size_t size) {
-  // validate buffer/serialized size
-  if (size < LODI_SERVER_RESPONSE_SIZE) {
-    return NULL;
-  }
-
-  LodiServerToLodiClientAcks *deserialized = malloc(sizeof(*deserialized));
-  if (!deserialized) {
-    return NULL;
-  }
-
-  size_t offset = 0;
-  deserialized->messageType = getUint32(serialized, &offset);
-  deserialized->userID = getUint32(serialized, &offset);
-
-  return deserialized;
-}
 
 int serializeClientLodi(PClientToLodiServer *toSerialize, char *serialized) {
   size_t offset = 0;

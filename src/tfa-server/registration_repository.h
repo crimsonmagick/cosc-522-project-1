@@ -7,7 +7,7 @@
 
 #include <netinet/in.h>
 
-void init();
+void initRepository();
 
 int addIP(unsigned int userId, struct in_addr clientAddress, unsigned short clientPort);
 

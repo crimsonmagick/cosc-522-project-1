@@ -26,12 +26,4 @@ typedef struct {
 int initLodiClientDomain(DomainServiceHandle **handle);
 
 int initLodiServerDomain(DomainServiceHandle **handle);
-
-char *serializeLodiServerRequest(const PClientToLodiServer *toSerialize);
-
-PClientToLodiServer *deserializeLodiServerRequest(const char *serialized, size_t size);
-
-char *serializeLodiServerResponse(const LodiServerToLodiClientAcks *toSerialize);
-
-LodiServerToLodiClientAcks *deserializeLodiServerResponse(const char *serialized, const size_t size);
 #endif
