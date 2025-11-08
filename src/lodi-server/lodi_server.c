@@ -13,7 +13,6 @@
 #include <stdbool.h>
 
 #include "messaging/lodi_messaging.h"
-#include "messaging/udp.h"
 #include "shared.h"
 #include "messaging/pke_messaging.h"
 #include "messaging/tfa_messaging.h"
@@ -22,40 +21,42 @@
 
 static DomainServiceHandle *pkeDomain = NULL;
 static struct sockaddr_in pkServerAddress;
-static DomainServiceHandle *lodiDomain= NULL;
+static DomainServiceHandle *lodiDomain = NULL;
 static struct sockaddr_in lodiServerAddress;
+static DomainServiceHandle *tfaDomain = NULL;
+static struct sockaddr_in tfaServerAddress;
 
 int sendPushRequest(const unsigned int userID) {
-  const ServerConfig config = getServerConfig(TFA);
   const TFAClientOrLodiServerToTFAServer requestMessage = {
     .messageType = requestAuth,
     .userID = userID
   };
 
-  char *requestBuffer = serializeTFAClientRequest(&requestMessage);
-  char responseBuffer[TFA_CLIENT_REQUEST_SIZE];
-  const int sendStatus = synchronousSend(requestBuffer, TFA_CLIENT_REQUEST_SIZE, responseBuffer,
-                                         TFA_SERVER_RESPONSE_SIZE, config.address, atoi(config.port));
-  free(requestBuffer);
-
-  if (sendStatus == ERROR) {
-    printf("Aborting push authentication...\n");
-  } else {
-    TFAServerToLodiServer *responseDeserialized = deserializeTFAServerLodiResponse(responseBuffer,
-      TFA_SERVER_RESPONSE_SIZE);
-    printf("Push auth successful! Received: messageType=%u, userID=%u", responseDeserialized->messageType,
-           responseDeserialized->userID);
-    free(responseDeserialized);
+  if (toDomainHost(tfaDomain, &requestMessage, &tfaServerAddress) == ERROR) {
+    printf("Unable to send push notification, aborting...\n");
+    return ERROR;
   }
 
-  return sendStatus;
+  TFAServerToLodiServer response;
+  struct sockaddr_in recreceiveAddr;
+  if (fromDomainHost(tfaDomain, &response, &recreceiveAddr) == ERROR) {
+    printf("Unable to receive push notification response, aborting...\n");
+    return ERROR;
+  }
+
+  printf("Push auth confirmation received! Received: messageType=%u, userID=%u\n", response.messageType,
+         response.userID);
+
+  return SUCCESS;
 }
 
 int main() {
   initPKEClientDomain(&pkeDomain);
   initLodiServerDomain(&lodiDomain);
+  initTFAClientDomain(&tfaDomain, false);
   pkServerAddress = getServerAddr(PK);
   lodiServerAddress = getServerAddr(LODI);
+  tfaServerAddress = getServerAddr(TFA);
 
   while (true) {
     struct sockaddr_in clientAddress;
